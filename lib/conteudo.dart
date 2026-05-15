@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-
-class Conteudo extends StatefulWidget{
+class Conteudo extends StatefulWidget {
   @override
   State<Conteudo> createState() => ConteudoState();
 }
@@ -39,23 +38,23 @@ class ConteudoState extends State<Conteudo>{
           "tipo": "imagem",
           "conteudo": "assets/images/estrutura-do-atomo.png"
         },
+        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
         {
           "tipo": "texto",
-          "conteudo": "Os átomos são compostos por prótons, nêutrons e elétrons. Os prótons possuem carga positiva, os elétrons negativa e os nêutrons são neutros."
-        }
-      ]
+          "conteudo":
+              "Os átomos são compostos por prótons, nêutrons e elétrons. Os prótons possuem carga positiva, os elétrons negativa e os nêutrons são neutros.",
+        },
+      ],
     },
     {
       "pagina": 2,
       "conteudos": [
         {
           "tipo": "texto",
-          "conteudo": "Os elementos químicos são definidos pelo número de prótons no núcleo do átomo, conhecido como número atômico."
+          "conteudo":
+              "Os elementos químicos são definidos pelo número de prótons no núcleo do átomo, conhecido como número atômico.",
         },
-        {
-          "tipo": "imagem",
-          "conteudo": "assets/images/estrutura-do-atomo.png"
-        },
+        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
         {
           "tipo": "exercicio",
           "tipo2": "texto",
@@ -63,40 +62,41 @@ class ConteudoState extends State<Conteudo>{
             "Número de elétrons",
             "Número de prótons",
             "Número de nêutrons",
-            "Massa do átomo"
+            "Massa do átomo",
           ],
           "pergunta": "O que define o número atômico de um elemento?",
-          "resposta": 2
-        }
-      ]
+          "resposta": 2,
+        },
+      ],
     },
     {
       "pagina": 3,
       "conteudos": [
         {
           "tipo": "texto",
-          "conteudo": "As ligações químicas ocorrem quando átomos compartilham ou transferem elétrons para alcançar maior estabilidade."
+          "conteudo":
+              "As ligações químicas ocorrem quando átomos compartilham ou transferem elétrons para alcançar maior estabilidade.",
         },
         {
           "tipo": "texto",
-          "conteudo": "Existem três tipos principais de ligações: iônica, covalente e metálica."
+          "conteudo":
+              "Existem três tipos principais de ligações: iônica, covalente e metálica.",
         },
-        {
-          "tipo": "imagem",
-          "conteudo": "assets/images/estrutura-do-atomo.png"
-        }
-      ]
+        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
+      ],
     },
     {
       "pagina": 4,
       "conteudos": [
         {
           "tipo": "texto",
-          "conteudo": "A ligação iônica ocorre entre metais e ametais, envolvendo a transferência de elétrons."
+          "conteudo":
+              "A ligação iônica ocorre entre metais e ametais, envolvendo a transferência de elétrons.",
         },
         {
           "tipo": "texto",
-          "conteudo": "Já a ligação covalente acontece entre ametais, com o compartilhamento de elétrons."
+          "conteudo":
+              "Já a ligação covalente acontece entre ametais, com o compartilhamento de elétrons.",
         },
         {
           "tipo": "exercicio",
@@ -105,7 +105,7 @@ class ConteudoState extends State<Conteudo>{
             "assets/images/estrutura-do-atomo.png",
             "assets/images/estrutura-do-atomo.png",
             "assets/images/estrutura-do-atomo.png",
-            "assets/images/estrutura-do-atomo.png"
+            "assets/images/estrutura-do-atomo.png",
           ],
           "pergunta": "O que caracteriza uma ligação covalente?",
           "resposta": 1
@@ -115,26 +115,26 @@ class ConteudoState extends State<Conteudo>{
     {
       "pagina": 5,
       "conteudos": [
+        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
         {
-          "tipo": "imagem",
-          "conteudo": "assets/images/estrutura-do-atomo.png"
+          "tipo": "texto",
+          "conteudo":
+              "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico.",
         },
         {
           "tipo": "texto",
-          "conteudo": "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico."
+          "conteudo":
+              "Elementos de uma mesma família possuem características semelhantes, como número de elétrons na camada de valência.",
         },
-        {
-          "tipo": "texto",
-          "conteudo": "Elementos de uma mesma família possuem características semelhantes, como número de elétrons na camada de valência."
-        }
-      ]
+      ],
     },
     {
       "pagina": 6,
       "conteudos": [
         {
           "tipo": "texto",
-          "conteudo": "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico."
+          "conteudo":
+              "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico.",
         },
         {
           "tipo": "video",
@@ -495,8 +495,8 @@ class ConteudoState extends State<Conteudo>{
     );
   }
 
-  void primeiroConteudo(){
-    setState(()=>paginaAtual = 1);
+  void primeiroConteudo() {
+    setState(() => paginaAtual = 1);
   }
 
   void reiniciarAula(){
@@ -510,9 +510,8 @@ class ConteudoState extends State<Conteudo>{
     });
   }
 
-
-  void voltarPagina(){
-    setState(() { 
+  void voltarPagina() {
+    setState(() {
       paginaAtual--;
       isExercise = false;
       resultado = null;
@@ -522,8 +521,8 @@ class ConteudoState extends State<Conteudo>{
     });
   }
 
-  void avancarPagina(){
-    setState(() {        
+  void avancarPagina() {
+    setState(() {
       paginaAtual++;
       isExercise = false;
       resultado = null;
@@ -576,7 +575,7 @@ class ConteudoState extends State<Conteudo>{
             ],
           ),
         );
-      }else{
+      } else {
         resultado = Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             padding: const EdgeInsets.all(16),
@@ -644,7 +643,7 @@ class ConteudoState extends State<Conteudo>{
     });
   }
 
-  void concluirAula(){
+  void concluirAula() {
     //Levar para tela de parabenização e colocar aula como status concluída
     stopwatch.stop();
 
@@ -671,10 +670,8 @@ class ConteudoState extends State<Conteudo>{
     Navigator.pushNamed(context, "/modulos");
   }
 
-
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
@@ -758,5 +755,4 @@ class ConteudoState extends State<Conteudo>{
       ),
     );
   }
-
 }
