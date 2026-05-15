@@ -1,7 +1,7 @@
-import 'dart:async';
+import 'package:atomix/parabenizar.dart';
 import 'package:flutter/material.dart';
-import 'package:chewie/chewie.dart';
-import 'package:video_player/video_player.dart';
+import 'package:flutter/rendering.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 
 class Conteudo extends StatefulWidget{
@@ -11,27 +11,29 @@ class Conteudo extends StatefulWidget{
 
 class ConteudoState extends State<Conteudo>{
 
-  late VideoPlayerController _videoController;
-  late ChewieController _chewieController;
+  // Controller do vídeo do YouTube da página atual.
+  YoutubePlayerController? _youtubeController;
+
+  final ScrollController _scrollController = ScrollController();
 
   int paginaAtual = 1;
 
   bool isExercise = false;
 
-
-  Container? resultado;
+  Widget? resultado;
 
   int? respostaSelecionada;
 
-
+  String tituloAula = "Título da aula";
 
   var arrayTeste = [
     {
       "pagina": 1,
+      "totalXP": 40,
       "conteudos": [
         {
           "tipo": "texto",
-          "conteudo": "A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos."
+          "conteudo": "A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos. A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. \n\n\n Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos."
         },
         {
           "tipo": "imagem",
@@ -106,7 +108,7 @@ class ConteudoState extends State<Conteudo>{
             "assets/images/estrutura-do-atomo.png"
           ],
           "pergunta": "O que caracteriza uma ligação covalente?",
-          "resposta": 2
+          "resposta": 1
         }
       ]
     },
@@ -136,435 +138,361 @@ class ConteudoState extends State<Conteudo>{
         },
         {
           "tipo": "video",
-          "conteudo": "assets/videos/videoExample.mp4"
+          "conteudo": "https://www.youtube.com/watch?v=A6GOf1RqiwQ"
         }
       ]
     }
   ];
 
-//   var arrayTeste = [
-//   {
-//     "pagina": 1,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "A água é o recurso natural mais importante para a sobrevivência no planeta."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 2,
-//     "conteudos": [
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 3,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Ela pode ser encontrada em três estados físicos principais."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 4,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O estado sólido, presente nas geleiras e nos polos."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 5,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O estado líquido, presente nos rios, oceanos e aquíferos."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 6,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O estado gasoso, visível no vapor que forma as nuvens."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 7,
-//     "conteudos": [
-//       {
-//         "tipo": "video",
-//         "conteudo": "assets/videos/videoExample.mp4"
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 8,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O ciclo da água garante a renovação constante desse recurso."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 9,
-//     "conteudos": [
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "A evaporação é o primeiro passo."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 10,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Seguido pela condensação nas altas camadas atmosféricas."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 11,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "E finalizando com a precipitação (chuva)."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 12,
-//     "conteudos": [
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Existem diversos corpos d'água no mundo."
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Os oceanos cobrem a maior parte da Terra."
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Os rios transportam água doce para o mar."
-//       },
-//       {
-//         "tipo": "video",
-//         "conteudo": "assets/videos/videoExample.mp4"
-//       },
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Os lagos são formações de água retida no continente."
-//       },
-//       {
-//         "tipo": "texto",
-//         "conteudo": "A preservação dos lençóis freáticos é vital."
-//       },
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       },
-//       {
-//         "tipo": "exercicio",
-//         "tipo2": "texto",
-//         "conteudo": [
-//           "Oxigênio",
-//           "Oceanos",
-//           "Rios",
-//           "Nuvens"
-//         ],
-//         "pergunta": "Qual destes cobre a maior parte do nosso planeta?",
-//         "resposta": 2
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 13,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Infelizmente, a poluição hídrica é um grande problema global."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 14,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O descarte incorreto de lixo prejudica a vida marinha."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 15,
-//     "conteudos": [
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 16,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "O tratamento de esgoto é necessário para reverter esse cenário."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 17,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Além disso, a agricultura consome a maior parte da água doce disponível."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 18,
-//     "conteudos": [
-//       {
-//         "tipo": "video",
-//         "conteudo": "assets/videos/videoExample.mp4"
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 19,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Sistemas de irrigação modernos ajudam a evitar o desperdício."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 20,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Em casa, pequenas atitudes fazem a diferença."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 21,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Como fechar a torneira ao escovar os dentes."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 22,
-//     "conteudos": [
-//       {
-//         "tipo": "imagem",
-//         "conteudo": "assets/images/estrutura-do-atomo.png"
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 23,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "E reduzir o tempo no banho."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 24,
-//     "conteudos": [
-//       {
-//         "tipo": "texto",
-//         "conteudo": "Garantindo assim água potável para as futuras gerações."
-//       }
-//     ]
-//   },
-//   {
-//     "pagina": 25,
-//     "conteudos": [
-//       {
-//         "tipo": "exercicio",
-//         "tipo2": "texto",
-//         "conteudo": [
-//           "Aumentar o tempo de banho",
-//           "Lavar a calçada com mangueira",
-//           "Fechar a torneira ao escovar os dentes",
-//           "Descartar óleo na pia"
-//         ],
-//         "pergunta": "Qual atitude ajuda a economizar água em casa?",
-//         "resposta": 3
-//       }
-//     ]
-//   }
-// ];
+  late int totalXP = arrayTeste[0]["totalXP"] as int;
 
+  late int totalPerdeXP = totalXP * 10 ~/ 100;
+
+  int countRespostaErrada = 0;
+
+  int maxRespostaErrada = 3;
+  
   int get paginaTotal => arrayTeste.length;
 
   List<Widget> conteudo = [];
 
-  late Row? setas = Row(
+  final Stopwatch stopwatch = Stopwatch();
+  
+  @override
+  void initState() {
+    super.initState();
+    formarConteudo();
+    stopwatch.start();
+  }
+
+  @override
+  void dispose() {
+    _youtubeController?.close();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildNavigationButtons() {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           onPressed: paginaAtual == 1 ? null : voltarPagina,
           disabledColor: Colors.grey,
-          icon: Icon(Icons.arrow_back, size: 30)
-        ), 
+          icon: const Icon(Icons.arrow_back, size: 30),
+        ),
         IconButton(
           onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
           disabledColor: Colors.grey,
-          icon: Icon(Icons.arrow_forward, size: 30)
+          icon: const Icon(Icons.arrow_forward, size: 30),
         )
       ],
     );
-
-  @override
-  void dispose() {
-    _videoController.dispose();
-    _chewieController.dispose();
-    super.dispose();
-  }
-
-  void initState(){
-    formarConteudo();
   }
 
   void formarConteudo(){
-    setState((){
-      conteudo.clear();
-      
-      arrayTeste.forEach((page) {
-        print(page['pagina']);
-        if(page["pagina"] == paginaAtual){
-          print("entrou no if");
-          (page["conteudos"] as List).forEach((content){
-            print(content);
-            if (content["tipo"] == "imagem") {
-              conteudo.add(
-                Image.asset(
-                  content["conteudo"] as String,
-                  width: 600,
-                ),
-              );
-            }
+    // Recarrega só o conteúdo da página selecionada.
+    _youtubeController?.close();
+    _youtubeController = null;
+    conteudo.clear();
 
-            if (content["tipo"] == "texto") {
-              conteudo.add(
-                Text(content["conteudo"] as String),
-              );
-            }
+    for (final page in arrayTeste) {
+      if (page["pagina"] != paginaAtual) continue;
 
-            if(content["tipo"] == "video"){
-              _videoController = VideoPlayerController.networkUrl(Uri.parse(content["conteudo"]));
-              _chewieController = _chewieController = ChewieController(
-                videoPlayerController: _videoController,
-                autoPlay: false,
-                looping: false,
-              );
-              conteudo.add(FutureBuilder(
-                future: _videoController.initialize(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return AspectRatio(
-                      aspectRatio: _videoController.value.aspectRatio,
-                      child: Chewie(controller: _chewieController),
-                    );
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-                },
-              ));
-            }
-
-            if (content["tipo"] == "exercicio"){
-              isExercise = true;
-
-              setas = null;
-
-              var respostaCorreta = content["resposta"];
-
-              List<String> listaConteudo = content["conteudo"] as List<String>;
-
-              conteudo.add(Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Text(content["pergunta"], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))
-              ));
-
-              conteudo.add(GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: listaConteudo.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, 
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: content["tipo2"] == "texto" ? 4.5 : 2.5, // ajusta altura/largura
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = listaConteudo[index];
-                    final isSelected = respostaSelecionada == index;
-                    return Card(
-                      color:  isSelected ? respostaCorreta - 1 == index ? Colors.green[400] : Colors.red[400] : Colors.white,
-                      clipBehavior: Clip.antiAlias,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            respostaSelecionada = index;
-                          });
-                          responderExercicio(respostaCorreta - 1 == index);
-                        },
-                        child: content["tipo2"] == "texto" ? 
-                          ListTile(
-                            title: Text(item) 
-                          )
-                        :
-                          Image.asset(
-                            item,
-                            width: 100,
-                          )
-                        
-                        
-                      ),
-                    );
-                  },
-                )
-              );
-            }
-          });
+      final pageContents = page["conteudos"] as List;
+      for (final content in pageContents) {
+        if (content["tipo"] == "imagem") {
+          conteudo.add(_buildImageBlock(content["conteudo"] as String));
         }
-      });
-    });
+
+        if (content["tipo"] == "texto") {
+          conteudo.add(_buildTextBlock(content["conteudo"] as String));
+        }
+
+        if (content["tipo"] == "video") {
+          conteudo.add(_buildYoutubeBlock(content["conteudo"] as String));
+        }
+
+        if (content["tipo"] == "exercicio") {
+          isExercise = true;
+
+          final respostaCorreta = content["resposta"] as int;
+          final List<String> listaConteudo = content["conteudo"] as List<String>;
+
+          conteudo.add(
+            _buildExerciseTitle(content["pergunta"] as String),
+          );
+
+          conteudo.add(
+            GridView.builder(
+              key: ValueKey(respostaSelecionada),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: listaConteudo.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 1,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: content["tipo2"] == "texto" ? 3.5 : 1.0,
+              ),
+              itemBuilder: (context, index) {
+                final item = listaConteudo[index];
+
+                return _buildExerciseOption(
+                  content: content,
+                  item: item,
+                  index: index,
+                  respostaCorreta: respostaCorreta,
+                );
+              },
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildSectionCard({required Widget child, Color? borderColor}) {
+    // Base visual para texto, imagem, vídeo e exercício.
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: borderColor ?? const Color(0xFFE6EEF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildTextBlock(String text) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 20), 
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7F8EE),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.menu_book_rounded, color: Color(0xFF2E7D5B)),
+            ),
+            ]),
+            const SizedBox(width: 14),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.55,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+       
+          
+        ],
+      ));
+  }
+
+  Widget _buildImageBlock(String assetPath) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 20), 
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.image_outlined, color: Color(0xFF2B6CB0)),
+              SizedBox(width: 8), 
+              Text("Figura")
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.asset(
+              assetPath,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYoutubeBlock(String videoUrl) {
+    // Transforma a URL em ID e monta o player do YouTube.
+    final videoId = YoutubePlayerController.convertUrlToId(videoUrl);
+
+    if (videoId == null) {
+      return _buildSectionCard(
+        borderColor: const Color(0xFFF0D3D3),
+        child: const Text('Não foi possível carregar este vídeo do YouTube.'),
+      );
+    }
+
+    _youtubeController?.close();
+    _youtubeController = YoutubePlayerController.fromVideoId(
+      videoId: videoId,
+      autoPlay: false,
+      params: const YoutubePlayerParams(
+        showFullscreenButton: true,
+      ),
+    );
+
+    return _buildSectionCard(
+      borderColor: const Color(0xFFF3D9B0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.smart_display_rounded, color: Color(0xFFD97706)),
+              SizedBox(width: 8),
+              Text(
+                'Vídeo complementar',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2D3748),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Assista ao vídeo para reforçar o conteúdo da aula.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: YoutubePlayer(
+                controller: _youtubeController!,
+                aspectRatio: 16 / 9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseTitle(String pergunta) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.quiz_outlined, color: Color(0xFF6B46C1)),
+              SizedBox(width: 8),
+              Text(
+                'Exercício',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2D3748),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            pergunta,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              height: 1.25,
+              color: Color(0xFF111827),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseOption({
+    required Map<String, dynamic> content,
+    required String item,
+    required int index,
+    required int respostaCorreta,
+  }) {
+    // Desenha uma alternativa do exercício.
+    final bool isSelected = respostaSelecionada == index;
+    final bool isTextOption = content["tipo2"] == "texto";
+
+    return Card(
+      key: ValueKey("$index-$respostaSelecionada"),
+      color: Colors.transparent,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isSelected ? const Color(0xFF2F855A) : const Color(0xFFE5E7EB),
+          width: 1.2,
+        ),
+      ),
+      child: InkWell(
+        onTap: () async {
+          setState(() {
+            respostaSelecionada = index;
+          });
+
+          await Future.delayed(const Duration(milliseconds: 200));
+
+          responderExercicio(respostaCorreta - 1 == index);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [Color(0xFFEAF7EF), Color(0xFFD9F0E2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: Colors.white,
+          ),
+          padding: const EdgeInsets.all(14),
+          child: isTextOption
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.asset(
+                    item,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 
   void primeiroConteudo(){
@@ -572,26 +500,13 @@ class ConteudoState extends State<Conteudo>{
   }
 
   void reiniciarAula(){
-    setState((){
+    setState((){ 
       paginaAtual = 1; 
       resultado = null; 
       isExercise = false; 
-      setas = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: paginaAtual == 1 ? null : voltarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_back, size: 30)
-          ), 
-          IconButton(
-            onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_forward, size: 30)
-          )
-        ],
-      );
+      respostaSelecionada = null;
       formarConteudo();
+      _scrollController.jumpTo(0);
     });
   }
 
@@ -601,22 +516,9 @@ class ConteudoState extends State<Conteudo>{
       paginaAtual--;
       isExercise = false;
       resultado = null;
-      setas = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: paginaAtual == 1 ? null : voltarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_back, size: 30)
-          ), 
-          IconButton(
-            onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_forward, size: 30)
-          )
-        ],
-      );
+      respostaSelecionada = null;
       formarConteudo();
+      _scrollController.jumpTo(0);
     });
   }
 
@@ -625,95 +527,148 @@ class ConteudoState extends State<Conteudo>{
       paginaAtual++;
       isExercise = false;
       resultado = null;
-      setas = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: paginaAtual == 1 ? null : voltarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_back, size: 30)
-          ), 
-          IconButton(
-            onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
-            disabledColor: Colors.grey,
-            icon: Icon(Icons.arrow_forward, size: 30)
-          )
-        ],
-      );
+      respostaSelecionada = null;
       formarConteudo();
+      _scrollController.jumpTo(0);
     });
   }
 
   void responderExercicio(bool resposta){
-    setState((){
+    setState((){ 
       if(resposta){
         resultado = Container(
-          color: Colors.green[400],
-          padding: EdgeInsets.all(10),
-          child: Row(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2F855A),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Muito bem! Você acertou a questão!", style: TextStyle(
-                color: Color.fromRGBO(255, 255, 255, 1),
-              ),),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+              const Expanded(
+                child: Text(
+                  "Muito bem! Você acertou a questão!",
+                  style: TextStyle(
+                    color: Color.fromRGBO(255, 255, 255, 1),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
-                icon: Icon(Icons.arrow_forward, color: Color.fromRGBO(255, 255, 255, 1)),
-                label: Text("Próximo", style: TextStyle(
-                  color: Color.fromRGBO(255, 255, 255, 1),
-                ),),
+              ),
+              const SizedBox(width: 12),
+              LayoutBuilder(
+                builder: (context, constraints){
+                  return SizedBox(
+                      width: constraints.maxWidth,
+                      child:ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F855A),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text("Próximo"),
+                    )
+                  );
+                }
               ),
             ],
           ),
         );
       }else{
         resultado = Container(
-            color: Colors.red[400],
-            padding: EdgeInsets.all(10),
-            child: Row(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC53030),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Não era bem isso...", style: TextStyle(
-                  color: Color.fromRGBO(255, 255, 255, 1),
-                ),),
-                Wrap(
-                  spacing: 10,
-                  children: [
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                      ),
-                      onPressed: reiniciarAula,
-                      icon: Icon(Icons.restart_alt_outlined, color: Color.fromRGBO(255, 255, 255, 1)),
-                      label: Text("Reiniciar aula", style: TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 1),
-                      ),),
+                const Expanded(
+                  child: Text(
+                    "Não era bem isso...",
+                    style: TextStyle(
+                      color: Color.fromRGBO(255, 255, 255, 1),
+                      fontWeight: FontWeight.w600,
                     ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                LayoutBuilder(
+                builder: (context, constraints) {
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      SizedBox(
+                        width: constraints.maxWidth,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC53030),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: reiniciarAula,
+                          icon: const Icon(Icons.restart_alt_outlined),
+                          label: const Text("Reiniciar aula"),
+                        ),
                       ),
-                      onPressed: ()=>{setState(() => resultado = null)},
-                      icon: Icon(Icons.refresh, color: Color.fromRGBO(255, 255, 255, 1)),
-                      label: Text("Tentar novamente", style: TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 1),
-                      ),),
-                    ),]
-                )
-                
+                      SizedBox(
+                        width: constraints.maxWidth,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC53030),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => setState(() => resultado = null),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text("Tentar novamente"),
+                        ),
+                      )
+                    ],
+                  );
+                },
+              )  
               ],
             ),
           );
+
+          if(countRespostaErrada < maxRespostaErrada){
+            totalXP -= totalPerdeXP;
+            countRespostaErrada++;
+          }
       }
     });
   }
 
   void concluirAula(){
     //Levar para tela de parabenização e colocar aula como status concluída
-    print("concluiu");
+    stopwatch.stop();
+
+    final minutos = (stopwatch.elapsed.inMinutes % 60)
+    .toString()
+    .padLeft(2, '0');
+
+    final segundos = (stopwatch.elapsed.inSeconds % 60)
+        .toString()
+        .padLeft(2, '0');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Parabenizar(
+          xp: totalXP,
+          tempo: "$minutos:$segundos",
+        ),
+      ),
+    );
+  }
+
+  void sairAula(){
+    Navigator.pushNamed(context, "/modulos");
   }
 
 
@@ -723,48 +678,85 @@ class ConteudoState extends State<Conteudo>{
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-          bottomNavigationBar: AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            height: 80,
-            child: resultado
+        appBar: AppBar(
+            toolbarHeight: 80,
+            backgroundColor: Colors.blue, 
+            title: Container(
+              child: Row(
+                spacing: 10, 
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children:[
+                  Wrap(
+                    spacing: 10,
+                    children:[
+                      InkWell(
+                        hoverColor: Colors.transparent,
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap:  sairAula,
+                        child: Icon(Icons.close, color: Colors.red[900])
+                      ),
+                      Text(tituloAula, style: TextStyle(color: Colors.white)),
+                    ]
+                  ),
+                  Container(  
+                    child: Text(
+                      '$paginaAtual/$paginaTotal',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ]
+              )
+            ),
+        ),
+        bottomNavigationBar: 
+          resultado != null ? 
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: resultado == null ? 0 : 180,
+              color: Colors.transparent,
+              child: resultado,
+          ) : !isExercise ? Container(color: Colors.blue, child:_buildNavigationButtons()) : null,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFF7FBFA),
+                Color(0xFFF1F7FF),
+                Color(0xFFFFFBF2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-          backgroundColor: Color.fromARGB(255, 255, 255, 255),
-          body: Center(
+          child: Center(
             child: SafeArea(
-              
-            child: AbsorbPointer(
-              absorbing: resultado != null,
-              child: SingleChildScrollView(
-                child: Container(
-                  width: 1000,
-                  child:
-                      Column(
-                        spacing: 30,
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [Text("$paginaAtual/$paginaTotal")],
-                        ),                    
-                        
-                        SingleChildScrollView(
-                          child: Column(
-                            spacing: 20,
-                            children: [...conteudo]
-                          )
+              child: AbsorbPointer(
+                absorbing: resultado != null,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 18),
+                        Column(
+                          children: [...conteudo],
                         ),
-                
-                        if(setas != null) setas!,
-                        
-                      ],),  
-                  
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-            
-          )
-          )
-      )
+          ),
+        ),
+      ),
     );
   }
+
 }

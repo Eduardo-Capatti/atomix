@@ -9,8 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  chewie: ^1.7.0
-  video_player: ^2.8.0
+  youtube_player_iframe: ^5.2.2
 
 
 dev_dependencies:
