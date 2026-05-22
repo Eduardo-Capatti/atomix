@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'basecard.dart'; // Onde estão seus cards com onTap
-import 'class2.dart'; // Onde está sua LessonsScreen
+import 'basecard.dart'; 
+import 'aula.dart'; 
 import 'navmenu.dart';
 import 'models.dart';
 import 'leaderboard.dart';
-// Lista estática com os dados dos módulos
+
 final List<ModuleModel> _modulosData = [
   ModuleModel(
     id: '1',
@@ -45,12 +45,16 @@ class _ModulesScreenState extends State<ModulesScreen> {
     });
   }
 
-  // Array contendo as telas que serão alternadas pelo BottomNavBar
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _telas = [
-      // Índice 0: Lista gerada dinamicamente a partir da lista estática
-      ListView(
+    
+    final telaModulos = Scaffold(
+      appBar: AppBar(
+        title: const Text('Meus Módulos'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           for (var module in _modulosData)
@@ -68,16 +72,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
             ),
         ],
       ),
-      // Índice 1: Leader Board
+    );
+
+    final List<Widget> _telas = [
+      telaModulos,
       const LeaderboardPage()
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Meus Módulos'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-      ),
       body: _telas[_selectedIndex],
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
