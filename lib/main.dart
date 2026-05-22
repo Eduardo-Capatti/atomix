@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; 
 import 'login.dart'; 
+import 'loginAdmin.dart'; 
+import 'moduloAdmin.dart'; 
 import 'cadastro.dart'; 
 import 'class2.dart';
 import 'class.dart';
@@ -33,8 +35,10 @@ void main() async {
       routes: {
         "/": (context) => LoginPage(),
         "/cadastro": (context) => CadastroPage(),
+        "/loginAdmin": (context) => LoginPageAdmin(),
         "/modulos": (context) => ModulesScreen(),
         "/conteudo": (context) => Conteudo(),
+        "/moduloAdmin": (context) => ModuloAdmin(),
       },
     ),
   );

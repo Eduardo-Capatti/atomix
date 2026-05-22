@@ -200,6 +200,8 @@ class ConteudoState extends State<Conteudo>{
       if (page["pagina"] != paginaAtual) continue;
 
       final pageContents = page["conteudos"] as List;
+      pageContents.sort((a, b) => a['ordem'].compareTo(b['ordem']));
+      
       for (final content in pageContents) {
         if (content["tipo"] == "imagem") {
           conteudo.add(_buildImageBlock(content["conteudo"] as String));
