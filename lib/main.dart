@@ -4,8 +4,8 @@ import 'login.dart';
 import 'loginAdmin.dart'; 
 import 'moduloAdmin.dart'; 
 import 'cadastro.dart'; 
-import 'class2.dart';
-import 'class.dart';
+import 'aula.dart';
+import 'modulo.dart';
 import 'conteudo.dart';
 import 'leaderboard.dart';
 
