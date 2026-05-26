@@ -8,11 +8,15 @@ import 'base64.dart';
 class Conteudo extends StatefulWidget {
   final String idAula;
   final String tituloAula;
+  final String idModulo;
+  final String moduleTitle;
 
   const Conteudo({
     super.key,
     required this.idAula,
     required this.tituloAula,
+    required this.idModulo,
+    required this.moduleTitle
   });
 
   @override
@@ -31,7 +35,7 @@ class ConteudoState extends State<Conteudo> {
   bool _isLoading = true;
   Widget? resultado;
   int? respostaSelecionada;
-  String tituloAula = 'Titulo da aula';
+  String tituloAula = '';
   int totalXP = 20;
   int totalPerdeXP = 4;
   int countRespostaErrada = 0;
@@ -678,6 +682,9 @@ class ConteudoState extends State<Conteudo> {
         builder: (context) => Parabenizar(
           xp: totalXP,
           tempo: '$minutos:$segundos',
+          idAula: widget.idAula,
+          idModulo: widget.idModulo,
+          moduleTitle: widget.moduleTitle
         ),
       ),
     );
@@ -706,7 +713,7 @@ class ConteudoState extends State<Conteudo> {
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     onTap: sairAula,
-                    child: Icon(Icons.arrow_back, color: Colors.red[900]),
+                    child: Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   Text(tituloAula, style: const TextStyle(color: Colors.white)),
                 ],

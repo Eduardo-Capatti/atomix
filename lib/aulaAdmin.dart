@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'base64.dart';
 import 'basecard.dart';
 import 'conteudoAdmin.dart';
+import 'session.dart';
 
 class AulaAdmin extends StatefulWidget {
   final String idModulo;
@@ -424,6 +425,11 @@ class _AulaAdminState extends State<AulaAdmin> {
             onPressed: () => _abrirDialogoAula(),
             icon: const Icon(Icons.add),
             tooltip: 'Nova aula',
+          ),
+          IconButton(
+            onPressed: () => finalizarSession(context),
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sair',
           ),
         ],
       ),

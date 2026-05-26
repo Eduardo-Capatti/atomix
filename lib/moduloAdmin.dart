@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'aulaAdmin.dart';
 import 'basecard.dart';
+import 'session.dart';
 
 class ModuloAdmin extends StatefulWidget {
   const ModuloAdmin({super.key});
@@ -20,7 +21,12 @@ class _ModuloAdminState extends State<ModuloAdmin> {
   @override
   void initState() {
     super.initState();
-    _carregarModulos();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if(!await verificarSession() || !await verificarAdmin()){
+          navegacaoSession(context, "/");  
+        }
+        _carregarModulos();
+    });
   }
 
   Future<void> _carregarModulos() async {
@@ -262,6 +268,11 @@ class _ModuloAdminState extends State<ModuloAdmin> {
             onPressed: () => _abrirDialogoModulo(),
             icon: const Icon(Icons.add),
             tooltip: 'Novo módulo',
+          ),
+          IconButton(
+            onPressed: () => finalizarSession(context),
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sair',
           ),
         ],
       ),

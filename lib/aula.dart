@@ -6,6 +6,7 @@ import 'conteudo.dart';
 import 'leaderboard.dart';
 import 'models.dart';
 import 'navmenu.dart';
+import 'session.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String idModulo;
@@ -81,6 +82,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final telaAulas = Scaffold(
       appBar: AppBar(
         title: Text(widget.moduleTitle),
+        
+        actions: [
+          IconButton(
+              onPressed: ()=>{finalizarSession(context)},
+              disabledColor: Colors.grey,
+              icon: const Icon(Icons.logout, size: 30),
+          ),
+        ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
@@ -101,6 +110,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
                               builder: (context) => Conteudo(
                                 idAula: lesson.id,
                                 tituloAula: lesson.title,
+                                idModulo: widget.idModulo,
+                                moduleTitle: widget.moduleTitle
                               ),
                             ),
                           );

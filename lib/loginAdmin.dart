@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'session.dart';
 
 class LoginPageAdmin extends StatefulWidget {
   const LoginPageAdmin({super.key});
@@ -20,7 +21,7 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
 
       //login deu certo!
       if (txtEmail.text.trim() == "admin@email.com" && txtSenha.text == "123456") {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential credencial = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: txtEmail.text
               .trim(), //limpa espaços vazios que o usuário possa ter digitado sem querer
           password: txtSenha.text,
@@ -28,6 +29,9 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
 
         //login deu certo!
         if (mounted) {
+          String idUsuario = credencial.user!.uid;
+          String nomeUsuario = credencial.user!.displayName ?? "";
+          formarSession(idUsuario, nomeUsuario, true);
           Navigator.pushReplacementNamed(context, "/moduloAdmin");
         }
       }
@@ -54,6 +58,23 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
         );
       }
     }
+  }
+
+  @override
+  void initState(){
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if(await verificarSession()){
+          print("logado");
+
+          if(await verificarAdmin()){
+            navegacaoSession(context, "/moduloAdmin");
+          }else{
+            navegacaoSession(context, "/modulos");
+          }
+        }
+    });
   }
 
   @override

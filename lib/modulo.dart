@@ -6,6 +6,7 @@ import 'basecard.dart';
 import 'leaderboard.dart';
 import 'models.dart';
 import 'navmenu.dart';
+import 'session.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -24,7 +25,13 @@ class _ModulesScreenState extends State<ModulesScreen> {
   @override
   void initState() {
     super.initState();
-    _carregarModulos();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if(!await verificarSession() || await verificarAdmin()){
+          navegacaoSession(context, "/");  
+        }
+        _carregarModulos();
+    });
   }
 
   Future<void> _carregarModulos() async {
@@ -32,6 +39,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
       _isLoading = true;
     });
 
+    final idUsuario = await getIdUsuario();
     QuerySnapshot<Map<String, dynamic>> snapshot;
 
     try {
@@ -48,10 +56,29 @@ class _ModulesScreenState extends State<ModulesScreen> {
             .compareTo((b.data()['ordem'] ?? 0) as num),
       );
 
+    final modulos = await Future.wait(
+      docs.map((doc) async {
+        final listagemUsuarioAula = await _firestore
+            .collection('usuarioAula')
+            .where('idModulo', isEqualTo: doc.id)
+            .where('idUsuario', isEqualTo: idUsuario)
+            .get();
+
+        Set<String> idsModulos = listagemUsuarioAula.docs
+          .map((doc) => doc['idModulo'] as String)
+          .toSet();
+
+        final dadosModulo = Map<String, dynamic>.from(doc.data());
+        dadosModulo['completedLessons'] = idsModulos.length;
+
+        return ModuleModel.fromMap(dadosModulo, doc.id);
+      }),
+    );
+
+    if (!mounted) return;
+
     setState(() {
-      _modulos = docs
-          .map((doc) => ModuleModel.fromMap(doc.data(), doc.id))
-          .toList();
+      _modulos = modulos;
       _isLoading = false;
     });
   }
@@ -66,7 +93,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
   Widget build(BuildContext context) {
     final telaModulos = Scaffold(
       appBar: AppBar(
-        title: const Text('Meus Modulos'),
+        title: const Text('Meus Módulos'),
+        actions: [
+          IconButton(
+              onPressed: ()=>{finalizarSession(context)},
+              disabledColor: Colors.grey,
+              icon: const Icon(Icons.logout, size: 30),
+            ),
+        ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),

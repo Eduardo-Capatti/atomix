@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:atomix/modulo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'session.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -43,9 +46,18 @@ class _CadastroPageState extends State<CadastroPage> {
       // Colocar nome do usuário no perfil
       await credential.user!.updateDisplayName(txtNome.text);
 
+      String idUsuario = credential.user!.uid;
+      
       //verificação se tudo estiver correto ir para a página de módulos
       if (mounted) {
-        Navigator.pushReplacementNamed(context, "/modulos");
+        final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+        final novoDoc = _firestore.collection('usuarios').doc(idUsuario);
+
+        await novoDoc.set({
+          'nomeUsuario': txtNome.text,
+          'xp': 0
+        });
+        Navigator.pushReplacementNamed(context, "/");
       }
     } on FirebaseAuthException catch (ex) {
       // Traduzir os erros dos firebase para o português
@@ -68,6 +80,23 @@ class _CadastroPageState extends State<CadastroPage> {
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     }
+  }
+
+  @override
+  void initState(){
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if(await verificarSession()){
+          print("logado");
+
+          if(await verificarAdmin()){
+            navegacaoSession(context, "/moduloAdmin");
+          }else{
+            navegacaoSession(context, "/modulos");
+          }
+        }
+    });
   }
 
   @override

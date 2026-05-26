@@ -14,12 +14,9 @@ class ModuleModel {
   });
 
   factory ModuleModel.fromMap(Map<String, dynamic> map, String id) {
-    final totalLessons = (map['quantidade'] as num?)?.toInt() ??
-        (map['totalLessons'] as num?)?.toInt() ??
-        0;
+    final totalLessons = (map['quantidade'] as num?)?.toInt() ?? 0;
     final completedLessons =
         (map['completedLessons'] as num?)?.toInt() ?? 0;
-
     return ModuleModel(
       id: id,
       title: map['titulo']?.toString() ?? map['title']?.toString() ?? '',

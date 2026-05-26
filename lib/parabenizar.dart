@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
+import 'session.dart';
+import 'aula.dart';
 
 List<String> imagem = [
   "assets/images/camaleaoPensativo.jpeg",
@@ -9,11 +12,17 @@ List<String> imagem = [
 class Parabenizar extends StatefulWidget {
   final int xp;
   final String tempo;
+  final String idAula;
+  final String idModulo;
+  final String moduleTitle;
 
   const Parabenizar({
     super.key,
     required this.xp,
-    required this.tempo
+    required this.tempo,
+    required this.idAula,
+    required this.idModulo,
+    required this.moduleTitle
   });
 
   @override
@@ -21,6 +30,37 @@ class Parabenizar extends StatefulWidget {
 }
 
 class ParabenizarState extends State<Parabenizar> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  void concluir() async{
+    await _firestore
+        .collection('usuarios')
+        .doc(await getIdUsuario())
+        .update({
+          'xp': FieldValue.increment(widget.xp),
+        });
+
+    final novoDoc = _firestore.collection('usuarioAula').doc();
+
+    await novoDoc.set({
+      'id': novoDoc.id,
+      'idAula': widget.idAula,
+      'idModulo': widget.idModulo,
+      'idUsuario': await getIdUsuario(),
+      'xp': widget.xp
+    });
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LessonsScreen(
+          idModulo: widget.idModulo,
+          moduleTitle: widget.moduleTitle,
+        ),
+      ),
+      (route) => route.isFirst,
+    );
+
+  }
   
   int randomInt = Random().nextInt(2);
 
@@ -102,7 +142,7 @@ class ParabenizarState extends State<Parabenizar> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
-                    onPressed: () => {},
+                    onPressed: concluir,
                     icon: Icon(
                       Icons.check_circle,
                       color: Color.fromRGBO(255, 255, 255, 1),

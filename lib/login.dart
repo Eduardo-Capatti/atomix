@@ -1,6 +1,8 @@
 //Importação necessária para o login
+import 'package:atomix/modulo.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'session.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> onLogin(BuildContext context) async {
     try {
       //logar o usuário com o email e senha digitados
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential credencial = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: txtEmail.text
             .trim(), //limpa espaços vazios que o usuário possa ter digitado sem querer
         password: txtSenha.text,
@@ -27,6 +29,9 @@ class _LoginPageState extends State<LoginPage> {
 
       //login deu certo!
       if (mounted) {
+        String idUsuario = credencial.user!.uid;
+        String nomeUsuario = credencial.user!.displayName ?? "";
+        formarSession(idUsuario, nomeUsuario, false);
         //"/home" para ir direto para o MenuPrincipal criado
         Navigator.pushReplacementNamed(context, "/modulos");
       }
@@ -54,6 +59,23 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     }
+  }
+
+  @override
+  void initState(){
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if(await verificarSession()){
+          print("logado");
+
+          if(await verificarAdmin()){
+            navegacaoSession(context, "/moduloAdmin");
+          }else{
+            navegacaoSession(context, "/modulos");
+          }
+        }
+    });
   }
 
   @override
