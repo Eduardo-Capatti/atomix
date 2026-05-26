@@ -149,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                   // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
                   onPressed: () => Navigator.pushNamed(context, "/loginAdmin"),
                   child: Text(
-                    "Entrar como administrador",
+                    "Entrar como professor",
                     style: TextStyle(color: Colors.blue[900]),
                   ),
                 ),

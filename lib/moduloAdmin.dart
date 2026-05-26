@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'aulaAdmin.dart';
 
+import 'aulaAdmin.dart';
 import 'basecard.dart';
 
 class ModuloAdmin extends StatefulWidget {
@@ -74,21 +74,18 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     await _carregarModulos();
   }
 
-  void _excluirModulo (String idModulo) async{
-    await _firestore
-        .collection('modulo')
-        .doc(idModulo)
-        .delete();
+  void _excluirModulo(String idModulo) async {
+    await _firestore.collection('modulo').doc(idModulo).delete();
     await _carregarModulos();
   }
 
-  _acessarAula(String idModulo, int quantidade){
+  void _acessarAula(String idModulo, int quantidade) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AulaAdmin(
           idModulo: idModulo,
-          quantidade: quantidade
+          quantidade: quantidade,
         ),
       ),
     );
@@ -190,11 +187,14 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     tituloController.dispose();
   }
 
-  Widget _buildModuloCard(QueryDocumentSnapshot<Map<String, dynamic>> modulo) {
+  Widget _buildModuloCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> modulo,
+    int index,
+  ) {
     final data = modulo.data();
     final titulo = data['titulo']?.toString() ?? '';
     final dificuldade = data['dificuldade']?.toString() ?? '';
-    final quantidade = data['quantidade'] ?? 0;
+    final quantidade =  data['quantidade'] ?? 0;
 
     return Card(
       key: ValueKey(modulo.id),
@@ -239,7 +239,13 @@ class _ModuloAdminState extends State<ModuloAdmin> {
               icon: const Icon(Icons.remove_red_eye),
               tooltip: 'Acessar aulas do módulo',
             ),
-            const Icon(Icons.drag_handle),
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.drag_handle),
+              ),
+            ),
           ],
         ),
       ),
@@ -266,9 +272,11 @@ class _ModuloAdminState extends State<ModuloAdmin> {
               : Padding(
                   padding: const EdgeInsets.all(20),
                   child: ReorderableListView(
+                    buildDefaultDragHandles: false,
                     onReorder: _reordenarModulos,
                     children: [
-                      for (final modulo in _modulos) _buildModuloCard(modulo),
+                      for (int i = 0; i < _modulos.length; i++)
+                        _buildModuloCard(_modulos[i], i),
                     ],
                   ),
                 ),

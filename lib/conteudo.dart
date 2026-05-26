@@ -1,175 +1,136 @@
 import 'package:atomix/parabenizar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
+import 'base64.dart';
+
 class Conteudo extends StatefulWidget {
+  final String idAula;
+  final String tituloAula;
+
+  const Conteudo({
+    super.key,
+    required this.idAula,
+    required this.tituloAula,
+  });
+
   @override
   State<Conteudo> createState() => ConteudoState();
 }
 
-class ConteudoState extends State<Conteudo>{
+class ConteudoState extends State<Conteudo> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Controller do vídeo do YouTube da página atual.
   YoutubePlayerController? _youtubeController;
-
   final ScrollController _scrollController = ScrollController();
+  final Stopwatch stopwatch = Stopwatch();
 
   int paginaAtual = 1;
-
   bool isExercise = false;
-
+  bool _isLoading = true;
   Widget? resultado;
-
   int? respostaSelecionada;
-
-  String tituloAula = "Título da aula";
-
-  var arrayTeste = [
-    {
-      "pagina": 1,
-      "totalXP": 40,
-      "conteudos": [
-        {
-          "tipo": "texto",
-          "conteudo": "A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos. A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. \n\n\n Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos.A matéria é tudo aquilo que possui massa e ocupa lugar no espaço. Ela é formada por partículas extremamente pequenas chamadas átomos."
-        },
-        {
-          "tipo": "imagem",
-          "conteudo": "assets/images/estrutura-do-atomo.png"
-        },
-        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
-        {
-          "tipo": "texto",
-          "conteudo":
-              "Os átomos são compostos por prótons, nêutrons e elétrons. Os prótons possuem carga positiva, os elétrons negativa e os nêutrons são neutros.",
-        },
-      ],
-    },
-    {
-      "pagina": 2,
-      "conteudos": [
-        {
-          "tipo": "texto",
-          "conteudo":
-              "Os elementos químicos são definidos pelo número de prótons no núcleo do átomo, conhecido como número atômico.",
-        },
-        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
-        {
-          "tipo": "exercicio",
-          "tipo2": "texto",
-          "conteudo": [
-            "Número de elétrons",
-            "Número de prótons",
-            "Número de nêutrons",
-            "Massa do átomo",
-          ],
-          "pergunta": "O que define o número atômico de um elemento?",
-          "resposta": 2,
-        },
-      ],
-    },
-    {
-      "pagina": 3,
-      "conteudos": [
-        {
-          "tipo": "texto",
-          "conteudo":
-              "As ligações químicas ocorrem quando átomos compartilham ou transferem elétrons para alcançar maior estabilidade.",
-        },
-        {
-          "tipo": "texto",
-          "conteudo":
-              "Existem três tipos principais de ligações: iônica, covalente e metálica.",
-        },
-        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
-      ],
-    },
-    {
-      "pagina": 4,
-      "conteudos": [
-        {
-          "tipo": "texto",
-          "conteudo":
-              "A ligação iônica ocorre entre metais e ametais, envolvendo a transferência de elétrons.",
-        },
-        {
-          "tipo": "texto",
-          "conteudo":
-              "Já a ligação covalente acontece entre ametais, com o compartilhamento de elétrons.",
-        },
-        {
-          "tipo": "exercicio",
-          "tipo2": "imagem",
-          "conteudo": [
-            "assets/images/estrutura-do-atomo.png",
-            "assets/images/estrutura-do-atomo.png",
-            "assets/images/estrutura-do-atomo.png",
-            "assets/images/estrutura-do-atomo.png",
-          ],
-          "pergunta": "O que caracteriza uma ligação covalente?",
-          "resposta": 1
-        }
-      ]
-    },
-    {
-      "pagina": 5,
-      "conteudos": [
-        {"tipo": "imagem", "conteudo": "assets/images/estrutura-do-atomo.png"},
-        {
-          "tipo": "texto",
-          "conteudo":
-              "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico.",
-        },
-        {
-          "tipo": "texto",
-          "conteudo":
-              "Elementos de uma mesma família possuem características semelhantes, como número de elétrons na camada de valência.",
-        },
-      ],
-    },
-    {
-      "pagina": 6,
-      "conteudos": [
-        {
-          "tipo": "texto",
-          "conteudo":
-              "A tabela periódica organiza os elementos químicos de acordo com suas propriedades e número atômico.",
-        },
-        {
-          "tipo": "video",
-          "conteudo": "https://www.youtube.com/watch?v=A6GOf1RqiwQ"
-        }
-      ]
-    }
-  ];
-
-  late int totalXP = arrayTeste[0]["totalXP"] as int;
-
-  late int totalPerdeXP = totalXP * 10 ~/ 100;
-
+  String tituloAula = 'Titulo da aula';
+  int totalXP = 20;
+  int totalPerdeXP = 4;
   int countRespostaErrada = 0;
-
   int maxRespostaErrada = 3;
-  
-  int get paginaTotal => arrayTeste.length;
-
+  List<Map<String, dynamic>> paginas = [];
   List<Widget> conteudo = [];
 
-  final Stopwatch stopwatch = Stopwatch();
-  
+  int get paginaTotal => paginas.length;
+
   @override
   void initState() {
     super.initState();
-    formarConteudo();
-    stopwatch.start();
+    tituloAula = widget.tituloAula;
+    _carregarConteudos();
+  }
+
+  @override
+  void didUpdateWidget(covariant Conteudo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.idAula != widget.idAula) {
+      tituloAula = widget.tituloAula;
+      _carregarConteudos();
+    }
   }
 
   @override
   void dispose() {
     _youtubeController?.close();
     _scrollController.dispose();
+    stopwatch.stop();
     super.dispose();
+  }
+
+  Future<void> _carregarConteudos() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+
+    try {
+      snapshot = await _firestore
+          .collection('conteudo')
+          .where('idAula', isEqualTo: widget.idAula)
+          .orderBy('pagina')
+          .get();
+    } catch (_) {
+      snapshot = await _firestore
+          .collection('conteudo')
+          .where('idAula', isEqualTo: widget.idAula)
+          .get();
+    }
+
+    final paginasOrdenadas = snapshot.docs
+        .map((doc) => Map<String, dynamic>.from(doc.data()))
+        .toList()
+      ..sort(
+        (a, b) => ((a['pagina'] ?? 0) as num)
+            .compareTo((b['pagina'] ?? 0) as num),
+      );
+
+    if (!mounted) return;
+
+    if (paginasOrdenadas.isEmpty) {
+      setState(() {
+        paginas = [];
+        conteudo = [];
+        paginaAtual = 1;
+        isExercise = false;
+        resultado = null;
+        respostaSelecionada = null;
+        _isLoading = false;
+      });
+      stopwatch
+        ..stop()
+        ..reset();
+      return;
+    }
+
+    final xp = (paginasOrdenadas.first['totalXP'] as num?)?.toInt() ?? 20;
+
+    setState(() {
+      paginas = paginasOrdenadas;
+      paginaAtual = 1;
+      totalXP = xp;
+      totalPerdeXP = xp * 10 ~/ 100;
+      countRespostaErrada = 0;
+      isExercise = false;
+      resultado = null;
+      respostaSelecionada = null;
+      formarConteudo();
+      _isLoading = false;
+    });
+
+    stopwatch
+      ..stop()
+      ..reset()
+      ..start();
   }
 
   Widget _buildNavigationButtons() {
@@ -185,46 +146,54 @@ class ConteudoState extends State<Conteudo>{
           onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
           disabledColor: Colors.grey,
           icon: const Icon(Icons.arrow_forward, size: 30),
-        )
+        ),
       ],
     );
   }
 
-  void formarConteudo(){
-    // Recarrega só o conteúdo da página selecionada.
+  void formarConteudo() {
     _youtubeController?.close();
     _youtubeController = null;
     conteudo.clear();
+    isExercise = false;
 
-    for (final page in arrayTeste) {
-      if (page["pagina"] != paginaAtual) continue;
+    for (final page in paginas) {
+      if (page['pagina'] != paginaAtual) continue;
 
-      final pageContents = page["conteudos"] as List;
-      pageContents.sort((a, b) => a['ordem'].compareTo(b['ordem']));
-      
+      final pageContents = List<Map<String, dynamic>>.from(
+        (page['conteudos'] as List? ?? []).map(
+          (item) => Map<String, dynamic>.from(item as Map),
+        ),
+      )..sort(
+          (a, b) => ((a['ordem'] ?? 0) as num)
+              .compareTo((b['ordem'] ?? 0) as num),
+        );
+
       for (final content in pageContents) {
-        if (content["tipo"] == "imagem") {
-          conteudo.add(_buildImageBlock(content["conteudo"] as String));
+        if (content['tipo'] == 'imagem') {
+          conteudo.add(_buildImageBlock(content['conteudo'] as String));
         }
 
-        if (content["tipo"] == "texto") {
-          conteudo.add(_buildTextBlock(content["conteudo"] as String));
+        if (content['tipo'] == 'texto') {
+          conteudo.add(_buildTextBlock(content['conteudo'] as String));
         }
 
-        if (content["tipo"] == "video") {
-          conteudo.add(_buildYoutubeBlock(content["conteudo"] as String));
+        if (content['tipo'] == 'video') {
+          conteudo.add(_buildYoutubeBlock(content['conteudo'] as String));
         }
 
-        if (content["tipo"] == "exercicio") {
+        if (content['tipo'] == 'exercicio') {
           isExercise = true;
 
-          final respostaCorreta = content["resposta"] as int;
-          final List<String> listaConteudo = content["conteudo"] as List<String>;
-
-          conteudo.add(
-            _buildExerciseTitle(content["pergunta"] as String),
+          final respostaCorreta =
+              (content['resposta'] as num?)?.toInt() ?? 1;
+          final List<String> listaConteudo = List<String>.from(
+            content['conteudo'] as List? ?? const <String>[],
           );
 
+          conteudo.add(
+            _buildExerciseTitle(content['pergunta']?.toString() ?? ''),
+          );
           conteudo.add(
             GridView.builder(
               key: ValueKey(respostaSelecionada),
@@ -235,7 +204,8 @@ class ConteudoState extends State<Conteudo>{
                 crossAxisCount: 1,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: content["tipo2"] == "texto" ? 3.5 : 1.0,
+                childAspectRatio:
+                    content['tipo2'] == 'texto' ? 3.5 : 1.0,
               ),
               itemBuilder: (context, index) {
                 final item = listaConteudo[index];
@@ -255,7 +225,6 @@ class ConteudoState extends State<Conteudo>{
   }
 
   Widget _buildSectionCard({required Widget child, Color? borderColor}) {
-    // Base visual para texto, imagem, vídeo e exercício.
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -277,54 +246,31 @@ class ConteudoState extends State<Conteudo>{
 
   Widget _buildTextBlock(String text) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 20), 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7F8EE),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.menu_book_rounded, color: Color(0xFF2E7D5B)),
-            ),
-            ]),
-            const SizedBox(width: 14),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.55,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-       
-          
-        ],
-      ));
-  }
-
-  Widget _buildImageBlock(String assetPath) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 20), 
+      margin: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.image_outlined, color: Color(0xFF2B6CB0)),
-              SizedBox(width: 8), 
-              Text("Figura")
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7F8EE),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: Color(0xFF2E7D5B),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              assetPath,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          const SizedBox(width: 14),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.55,
+              color: Color(0xFF1F2937),
             ),
           ),
         ],
@@ -332,14 +278,62 @@ class ConteudoState extends State<Conteudo>{
     );
   }
 
+  Widget _buildInvalidImage() {
+    return Container(
+      height: 180,
+      width: double.infinity,
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Icon(Icons.broken_image),
+    );
+  }
+
+  Widget _buildImageBlock(String valorImagem) {
+    final bytes = converterBase64EmBytes(valorImagem);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.image_outlined, color: Color(0xFF2B6CB0)),
+              SizedBox(width: 8),
+              Text('Figura'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: bytes != null
+                ? Image.memory(
+                    bytes,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildInvalidImage(),
+                  )
+                : Image.asset(
+                    valorImagem,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildInvalidImage(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildYoutubeBlock(String videoUrl) {
-    // Transforma a URL em ID e monta o player do YouTube.
     final videoId = YoutubePlayerController.convertUrlToId(videoUrl);
 
     if (videoId == null) {
       return _buildSectionCard(
         borderColor: const Color(0xFFF0D3D3),
-        child: const Text('Não foi possível carregar este vídeo do YouTube.'),
+        child: const Text('Nao foi possivel carregar este video do YouTube.'),
       );
     }
 
@@ -362,7 +356,7 @@ class ConteudoState extends State<Conteudo>{
               Icon(Icons.smart_display_rounded, color: Color(0xFFD97706)),
               SizedBox(width: 8),
               Text(
-                'Vídeo complementar',
+                'Video complementar',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -373,7 +367,7 @@ class ConteudoState extends State<Conteudo>{
           ),
           const SizedBox(height: 12),
           const Text(
-            'Assista ao vídeo para reforçar o conteúdo da aula.',
+            'Assista ao video para reforcar o conteudo da aula.',
             style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 14),
@@ -394,7 +388,7 @@ class ConteudoState extends State<Conteudo>{
 
   Widget _buildExerciseTitle(String pergunta) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 20),
+      margin: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -403,7 +397,7 @@ class ConteudoState extends State<Conteudo>{
               Icon(Icons.quiz_outlined, color: Color(0xFF6B46C1)),
               SizedBox(width: 8),
               Text(
-                'Exercício',
+                'Exercicio',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -427,18 +421,39 @@ class ConteudoState extends State<Conteudo>{
     );
   }
 
+  Widget _buildExerciseImageOption(String item) {
+    final bytes = converterBase64EmBytes(item);
+
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) => _buildInvalidImage(),
+      );
+    }
+
+    return Image.asset(
+      item,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) => _buildInvalidImage(),
+    );
+  }
+
   Widget _buildExerciseOption({
     required Map<String, dynamic> content,
     required String item,
     required int index,
     required int respostaCorreta,
   }) {
-    // Desenha uma alternativa do exercício.
     final bool isSelected = respostaSelecionada == index;
-    final bool isTextOption = content["tipo2"] == "texto";
+    final bool isTextOption = content['tipo2'] == 'texto';
 
     return Card(
-      key: ValueKey("$index-$respostaSelecionada"),
+      key: ValueKey('$index-$respostaSelecionada'),
       color: Colors.transparent,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -485,12 +500,7 @@ class ConteudoState extends State<Conteudo>{
                 )
               : ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.asset(
-                    item,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
+                  child: _buildExerciseImageOption(item),
                 ),
         ),
       ),
@@ -501,12 +511,20 @@ class ConteudoState extends State<Conteudo>{
     setState(() => paginaAtual = 1);
   }
 
-  void reiniciarAula(){
-    setState((){ 
-      paginaAtual = 1; 
-      resultado = null; 
-      isExercise = false; 
+  void reiniciarAula() {
+    setState(() {
+      final xpInicial = (paginas.isNotEmpty
+              ? (paginas.first['totalXP'] as num?)?.toInt()
+              : null) ??
+          totalXP;
+
+      paginaAtual = 1;
+      resultado = null;
+      isExercise = false;
       respostaSelecionada = null;
+      totalXP = xpInicial;
+      totalPerdeXP = xpInicial * 10 ~/ 100;
+      countRespostaErrada = 0;
       formarConteudo();
       _scrollController.jumpTo(0);
     });
@@ -534,9 +552,9 @@ class ConteudoState extends State<Conteudo>{
     });
   }
 
-  void responderExercicio(bool resposta){
-    setState((){ 
-      if(resposta){
+  void responderExercicio(bool resposta) {
+    setState(() {
+      if (resposta) {
         resultado = Container(
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           padding: const EdgeInsets.all(16),
@@ -550,7 +568,7 @@ class ConteudoState extends State<Conteudo>{
             children: [
               const Expanded(
                 child: Text(
-                  "Muito bem! Você acertou a questão!",
+                  'Muito bem! Voce acertou a questao!',
                   style: TextStyle(
                     color: Color.fromRGBO(255, 255, 255, 1),
                     fontWeight: FontWeight.w600,
@@ -559,47 +577,48 @@ class ConteudoState extends State<Conteudo>{
               ),
               const SizedBox(width: 12),
               LayoutBuilder(
-                builder: (context, constraints){
+                builder: (context, constraints) {
                   return SizedBox(
-                      width: constraints.maxWidth,
-                      child:ElevatedButton.icon(
+                    width: constraints.maxWidth,
+                    child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2F855A),
                         foregroundColor: Colors.white,
                       ),
-                      onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
+                      onPressed:
+                          paginaAtual == paginaTotal ? concluirAula : avancarPagina,
                       icon: const Icon(Icons.arrow_forward),
-                      label: const Text("Próximo"),
-                    )
+                      label: const Text('Proximo'),
+                    ),
                   );
-                }
+                },
               ),
             ],
           ),
         );
       } else {
         resultado = Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFC53030),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Não era bem isso...",
-                    style: TextStyle(
-                      color: Color.fromRGBO(255, 255, 255, 1),
-                      fontWeight: FontWeight.w600,
-                    ),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFC53030),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  'Nao era bem isso...',
+                  style: TextStyle(
+                    color: Color.fromRGBO(255, 255, 255, 1),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 12),
-                LayoutBuilder(
+              ),
+              const SizedBox(width: 12),
+              LayoutBuilder(
                 builder: (context, constraints) {
                   return Wrap(
                     spacing: 10,
@@ -614,7 +633,7 @@ class ConteudoState extends State<Conteudo>{
                           ),
                           onPressed: reiniciarAula,
                           icon: const Icon(Icons.restart_alt_outlined),
-                          label: const Text("Reiniciar aula"),
+                          label: const Text('Reiniciar aula'),
                         ),
                       ),
                       SizedBox(
@@ -626,50 +645,46 @@ class ConteudoState extends State<Conteudo>{
                           ),
                           onPressed: () => setState(() => resultado = null),
                           icon: const Icon(Icons.refresh),
-                          label: const Text("Tentar novamente"),
+                          label: const Text('Tentar novamente'),
                         ),
-                      )
+                      ),
                     ],
                   );
                 },
-              )  
-              ],
-            ),
-          );
+              ),
+            ],
+          ),
+        );
 
-          if(countRespostaErrada < maxRespostaErrada){
-            totalXP -= totalPerdeXP;
-            countRespostaErrada++;
-          }
+        if (countRespostaErrada < maxRespostaErrada) {
+          totalXP -= totalPerdeXP;
+          countRespostaErrada++;
+        }
       }
     });
   }
 
   void concluirAula() {
-    //Levar para tela de parabenização e colocar aula como status concluída
     stopwatch.stop();
 
-    final minutos = (stopwatch.elapsed.inMinutes % 60)
-    .toString()
-    .padLeft(2, '0');
-
-    final segundos = (stopwatch.elapsed.inSeconds % 60)
-        .toString()
-        .padLeft(2, '0');
+    final minutos =
+        (stopwatch.elapsed.inMinutes % 60).toString().padLeft(2, '0');
+    final segundos =
+        (stopwatch.elapsed.inSeconds % 60).toString().padLeft(2, '0');
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Parabenizar(
           xp: totalXP,
-          tempo: "$minutos:$segundos",
+          tempo: '$minutos:$segundos',
         ),
       ),
     );
   }
 
-  void sairAula(){
-    Navigator.pushNamed(context, "/modulos");
+  void sairAula() {
+    Navigator.pop(context);
   }
 
   @override
@@ -678,47 +693,47 @@ class ConteudoState extends State<Conteudo>{
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-            toolbarHeight: 80,
-            backgroundColor: Colors.blue, 
-            title: Container(
-              child: Row(
-                spacing: 10, 
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children:[
-                  Wrap(
-                    spacing: 10,
-                    children:[
-                      InkWell(
-                        hoverColor: Colors.transparent,
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap:  sairAula,
-                        child: Icon(Icons.close, color: Colors.red[900])
-                      ),
-                      Text(tituloAula, style: TextStyle(color: Colors.white)),
-                    ]
+          toolbarHeight: 80,
+          backgroundColor: Colors.blue,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Wrap(
+                spacing: 10,
+                children: [
+                  InkWell(
+                    hoverColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: sairAula,
+                    child: Icon(Icons.arrow_back, color: Colors.red[900]),
                   ),
-                  Container(  
-                    child: Text(
-                      '$paginaAtual/$paginaTotal',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ]
-              )
-            ),
+                  Text(tituloAula, style: const TextStyle(color: Colors.white)),
+                ],
+              ),
+              Text(
+                paginas.isEmpty ? '0/0' : '$paginaAtual/$paginaTotal',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
-        bottomNavigationBar: 
-          resultado != null ? 
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              height: resultado == null ? 0 : 180,
-              color: Colors.transparent,
-              child: resultado,
-          ) : !isExercise ? Container(color: Colors.blue, child:_buildNavigationButtons()) : null,
+        bottomNavigationBar: resultado != null
+            ? AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: 180,
+                color: Colors.transparent,
+                child: resultado,
+              )
+            : !_isLoading && paginas.isNotEmpty && !isExercise
+                ? Container(
+                    color: Colors.blue,
+                    child: _buildNavigationButtons(),
+                  )
+                : null,
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -735,21 +750,25 @@ class ConteudoState extends State<Conteudo>{
             child: SafeArea(
               child: AbsorbPointer(
                 absorbing: resultado != null,
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: Container(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 18),
-                        Column(
-                          children: [...conteudo],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : paginas.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Nenhum conteudo cadastrado para esta aula.',
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: 18),
+                                Column(children: [...conteudo]),
+                              ],
+                            ),
+                          ),
               ),
             ),
           ),

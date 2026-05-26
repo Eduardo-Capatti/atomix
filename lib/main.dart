@@ -1,15 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; 
-import 'login.dart'; 
-import 'loginAdmin.dart'; 
-import 'moduloAdmin.dart'; 
-import 'cadastro.dart'; 
-import 'aula.dart';
-import 'modulo.dart';
-import 'conteudo.dart';
-import 'leaderboard.dart';
 
-// Configuração do Firebase convertida para Dart
+import 'cadastro.dart';
+import 'login.dart';
+import 'loginAdmin.dart';
+import 'modulo.dart';
+import 'moduloAdmin.dart';
+
 final firebaseOptions = FirebaseOptions(
   apiKey: "AIzaSyBRzmKhbB2o4p5zXzKyCmyQ_3zd1303H-4",
   authDomain: "atomix-93312.firebaseapp.com",
@@ -20,10 +17,8 @@ final firebaseOptions = FirebaseOptions(
 );
 
 void main() async {
-  // Garante que o Flutter inicialize os bindings antes do Firebase
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa o Firebase com as credenciais do Atômix
   await Firebase.initializeApp(
     options: firebaseOptions,
   );
@@ -31,13 +26,12 @@ void main() async {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "/", 
+      initialRoute: "/",
       routes: {
         "/": (context) => LoginPage(),
         "/cadastro": (context) => CadastroPage(),
         "/loginAdmin": (context) => LoginPageAdmin(),
         "/modulos": (context) => ModulesScreen(),
-        "/conteudo": (context) => Conteudo(),
         "/moduloAdmin": (context) => ModuloAdmin(),
       },
     ),

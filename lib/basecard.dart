@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
+import 'base64.dart';
 import 'models.dart';
-// Este é o seu "esqueleto" que gerencia a parte visual externa
+
 class CustomAppCard extends StatelessWidget {
   final Widget child;
   final Color? backgroundColor;
@@ -29,7 +31,6 @@ class CustomAppCard extends StatelessWidget {
   }
 }
 
-// Implementação do Card de Módulo (Matérias)
 class ModuleCard extends StatelessWidget {
   final ModuleModel module;
   final VoidCallback? onTap;
@@ -84,7 +85,7 @@ class ModuleCard extends StatelessWidget {
             const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerRight,
-              child: Text('${(module.progress * 100).toInt()}% concluído'),
+              child: Text('${(module.progress * 100).toInt()}% concluido'),
             ),
           ],
         ),
@@ -93,7 +94,6 @@ class ModuleCard extends StatelessWidget {
   }
 }
 
-// Implementação do Card de Aula
 class LessonCard extends StatelessWidget {
   final LessonModel lesson;
   final VoidCallback? onTap;
@@ -104,28 +104,48 @@ class LessonCard extends StatelessWidget {
     this.onTap,
   });
 
+  Widget _buildFallbackImage() {
+    return Container(
+      width: 80,
+      height: 60,
+      color: Colors.grey[300],
+      child: const Icon(Icons.broken_image),
+    );
+  }
+
+  Widget _buildLessonImage() {
+    final bytes = converterBase64EmBytes(lesson.imageUrl);
+
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        width: 80,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stack) => _buildFallbackImage(),
+      );
+    }
+
+    return Image.network(
+      lesson.imageUrl,
+      width: 80,
+      height: 60,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stack) => _buildFallbackImage(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap ?? () => Navigator.pushNamed(context, "/conteudo"),
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: CustomAppCard(
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                lesson.imageUrl,
-                width: 80,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => Container(
-                  width: 80,
-                  height: 60,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.broken_image),
-                ),
-              ),
+              child: _buildLessonImage(),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -134,12 +154,19 @@ class LessonCard extends StatelessWidget {
                 children: [
                   Text(
                     lesson.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.timer_outlined, size: 14, color: Colors.grey),
+                      const Icon(
+                        Icons.timer_outlined,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         lesson.estimatedTime,

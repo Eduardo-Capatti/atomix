@@ -95,15 +95,17 @@ class _AulaAdminState extends State<AulaAdmin> {
     await _carregarAulas();
   }
 
-  void _excluirAula(String idAula) async {
-    await _firestore.collection('aula').doc(idAula).delete();
-
-    quantidade--;
+  Future<void> _atualizarQuantidadeAulasModulo(int delta) async {
+    quantidade += delta;
 
     await _firestore.collection('modulo').doc(widget.idModulo).update({
-      'quantidade': quantidade,
+      'quantidade': FieldValue.increment(delta),
     });
+  }
 
+  void _excluirAula(String idAula) async {
+    await _firestore.collection('aula').doc(idAula).delete();
+    await _atualizarQuantidadeAulasModulo(-1);
     await _carregarAulas();
   }
 
@@ -120,7 +122,7 @@ class _AulaAdminState extends State<AulaAdmin> {
     String valor, {
     double altura = 140,
     String emptyLabel = 'Nenhuma imagem cadastrada.',
-    String invalidLabel = 'Imagem inválida.',
+    String invalidLabel = 'Imagem invalida.',
   }) {
     final texto = valor.trim();
 
@@ -174,11 +176,11 @@ class _AulaAdminState extends State<AulaAdmin> {
     final tituloController = TextEditingController(
       text: aula?.data()['titulo']?.toString() ?? '',
     );
+    final totalXPController = TextEditingController(
+      text: aula?.data()['totalXP']?.toString() ?? '',
+    );
     final tempoEstimadoController = TextEditingController(
       text: aula?.data()['tempoEstimado']?.toString() ?? '',
-    );
-    final urlController = TextEditingController(
-      text: aula?.data()['url']?.toString() ?? '',
     );
     final bool editando = aula != null;
     String imagemBase64 = aula?.data()['url']?.toString() ?? '';
@@ -200,7 +202,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                       TextField(
                         controller: tituloController,
                         decoration: const InputDecoration(
-                          labelText: 'Título',
+                          labelText: 'Titulo',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -209,6 +211,15 @@ class _AulaAdminState extends State<AulaAdmin> {
                         controller: tempoEstimadoController,
                         decoration: const InputDecoration(
                           labelText: 'Tempo estimado',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: totalXPController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Total XP',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -225,7 +236,6 @@ class _AulaAdminState extends State<AulaAdmin> {
 
                             setDialogState(() {
                               imagemBase64 = imagem;
-                              urlController.text = imagem;
                               erroFormulario = null;
                             });
                           },
@@ -234,13 +244,11 @@ class _AulaAdminState extends State<AulaAdmin> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
-                      const SizedBox(height: 12),
                       _buildImagemPreview(
                         imagemBase64,
                         altura: 180,
                         emptyLabel: 'Nenhuma imagem selecionada.',
-                        invalidLabel: 'A imagem informada é inválida.',
+                        invalidLabel: 'A imagem informada e invalida.',
                       ),
                       if (erroFormulario != null) ...[
                         const SizedBox(height: 12),
@@ -263,17 +271,27 @@ class _AulaAdminState extends State<AulaAdmin> {
                     final titulo = tituloController.text.trim();
                     final tempoEstimado = tempoEstimadoController.text.trim();
                     final url = imagemBase64.trim();
+                    final totalXPTexto = totalXPController.text.trim();
+                    final totalXP = int.tryParse(totalXPTexto);
 
                     if (titulo.isEmpty) {
                       setDialogState(() {
-                        erroFormulario = 'Preencha o título antes de salvar.';
+                        erroFormulario = 'Preencha o titulo antes de salvar.';
+                      });
+                      return;
+                    }
+
+                    if (totalXPTexto.isEmpty || totalXP == null || totalXP < 0) {
+                      setDialogState(() {
+                        erroFormulario =
+                            'Informe um Total XP numerico valido.';
                       });
                       return;
                     }
 
                     if (url.isNotEmpty && converterBase64EmBytes(url) == null) {
                       setDialogState(() {
-                        erroFormulario = 'A imagem informada é inválida.';
+                        erroFormulario = 'A imagem informada e invalida.';
                       });
                       return;
                     }
@@ -282,6 +300,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                       await _firestore.collection('aula').doc(aula.id).update({
                         'titulo': titulo,
                         'tempoEstimado': tempoEstimado,
+                        'totalXP': totalXP,
                         'url': url,
                       });
                     } else {
@@ -292,15 +311,12 @@ class _AulaAdminState extends State<AulaAdmin> {
                         'idModulo': widget.idModulo,
                         'titulo': titulo,
                         'tempoEstimado': tempoEstimado,
+                        'totalXP': totalXP,
                         'url': url,
                         'ordem': _aulas.length,
                       });
 
-                      quantidade++;
-
-                      await _firestore.collection('modulo').doc(widget.idModulo).update({
-                        'quantidade': quantidade,
-                      });
+                      await _atualizarQuantidadeAulasModulo(1);
                     }
 
                     if (!context.mounted) return;
@@ -317,11 +333,14 @@ class _AulaAdminState extends State<AulaAdmin> {
     );
 
     tituloController.dispose();
+    totalXPController.dispose();
     tempoEstimadoController.dispose();
-    urlController.dispose();
   }
 
-  Widget _buildAulaCard(QueryDocumentSnapshot<Map<String, dynamic>> aula) {
+  Widget _buildAulaCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> aula,
+    int index,
+  ) {
     final data = aula.data();
     final titulo = data['titulo']?.toString() ?? '';
     final tempoEstimado = data['tempoEstimado']?.toString() ?? '';
@@ -333,49 +352,62 @@ class _AulaAdminState extends State<AulaAdmin> {
       color: Colors.transparent,
       elevation: 0,
       child: CustomAppCard(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 130,
-              child: _buildImagemPreview(url),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titulo,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            Column(
+              children: [
+                SizedBox(
+                  width: 130,
+                  child: _buildImagemPreview(url),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    Text('ID: ${aula.id}'),
+                    const SizedBox(height: 4),
+                    Text('Tempo estimado: $tempoEstimado'),
+                    const SizedBox(height: 4),
+                  ],
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => _abrirDialogoAula(aula: aula),
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Editar aula',
+                ),
+                IconButton(
+                  onPressed: () => _excluirAula(aula.id),
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Excluir aula',
+                ),
+                IconButton(
+                  onPressed: () => _acessarConteudo(aula.id),
+                  icon: const Icon(Icons.remove_red_eye),
+                  tooltip: 'Acessar conteudo',
+                ),
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.drag_handle),
                   ),
-                  const SizedBox(height: 8),
-                  Text('ID: ${aula.id}'),
-                  const SizedBox(height: 4),
-                  Text('Tempo estimado: $tempoEstimado'),
-                  const SizedBox(height: 4),
-                ],
-              ),
+                ),
+                const SizedBox(width: 16),
+              ],
             ),
-            IconButton(
-              onPressed: () => _abrirDialogoAula(aula: aula),
-              icon: const Icon(Icons.edit),
-              tooltip: 'Editar aula',
-            ),
-            IconButton(
-              onPressed: () => _excluirAula(aula.id),
-              icon: const Icon(Icons.delete),
-              tooltip: 'Excluir aula',
-            ),
-            IconButton(
-              onPressed: () => _acessarConteudo(aula.id),
-              icon: const Icon(Icons.remove_red_eye),
-              tooltip: 'Acessar conteúdo',
-            ),
-            const Icon(Icons.drag_handle),
           ],
         ),
       ),
@@ -402,9 +434,11 @@ class _AulaAdminState extends State<AulaAdmin> {
               : Padding(
                   padding: const EdgeInsets.all(20),
                   child: ReorderableListView(
+                    buildDefaultDragHandles: false,
                     onReorder: _reordenarAulas,
                     children: [
-                      for (final aula in _aulas) _buildAulaCard(aula),
+                      for (int i = 0; i < _aulas.length; i++)
+                        _buildAulaCard(_aulas[i], i),
                     ],
                   ),
                 ),

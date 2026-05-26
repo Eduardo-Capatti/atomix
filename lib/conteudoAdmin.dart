@@ -195,6 +195,24 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     await _carregarPaginas(paginaDesejada: proximaPagina);
   }
 
+  Future<void> _excluirPaginaAtual() async {
+    final pagina = _paginaAtualDoc;
+
+    if (pagina == null) {
+      return;
+    }
+
+    final paginaAtual = (_paginaAtualData['pagina'] as num?)?.toInt() ?? 1;
+
+    await _firestore.collection('conteudo').doc(pagina.id).delete();
+
+    await _carregarPaginas(
+      paginaDesejada: _paginas.length <= 1
+          ? null
+          : (paginaAtual > 1 ? paginaAtual - 1 : 1),
+    );
+  }
+
   Future<void> _moverPagina(int direcao) async {
     if (!_temPaginas) return;
 
@@ -415,20 +433,6 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        TextField(
-                          controller: conteudoController,
-                          maxLines: 4,
-                          decoration: const InputDecoration(
-                            labelText: 'Imagem em base64',
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: (value) {
-                            setDialogState(() {
-                              imagemBase64 = value.trim();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 12),
                         _buildImagemPreview(
                           imagemBase64,
                           emptyLabel: 'Nenhuma imagem selecionada.',
@@ -557,20 +561,6 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                       icon: const Icon(Icons.upload),
                                       label: Text('Selecionar imagem ${i + 1}'),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextField(
-                                    controller: respostaControllers[i],
-                                    maxLines: 3,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Imagem em base64',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (value) {
-                                      setDialogState(() {
-                                        respostasImagem[i] = value.trim();
-                                      });
-                                    },
                                   ),
                                   const SizedBox(height: 8),
                                   _buildImagemPreview(
@@ -737,6 +727,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     String valor, {
     required String emptyLabel,
     required String invalidLabel,
+    double tamanho = 180,
+    bool quadrado = false,
   }) {
     final texto = valor.trim();
 
@@ -752,27 +744,56 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image.memory(
-        bytes,
-        height: 180,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder(invalidLabel);
-        },
+      child: SizedBox(
+        width: quadrado ? tamanho : double.infinity,
+        height: tamanho,
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholder(
+              invalidLabel,
+              tamanho: tamanho,
+              quadrado: quadrado,
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildPlaceholder(String texto) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildPlaceholder(
+    String texto, {
+    double tamanho = 180,
+    bool quadrado = false,
+  }) {
+    return SizedBox(
+      width: quadrado ? tamanho : double.infinity,
+      height: tamanho,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          texto,
+          textAlign: TextAlign.center,
+        ),
       ),
-      child: Text(texto),
+    );
+  }
+
+  Widget _buildImagemConteudoCard(String valor) {
+    return Center(
+      child: _buildImagemPreview(
+        valor,
+        emptyLabel: 'Nenhuma imagem cadastrada.',
+        invalidLabel: 'Imagem inválida.',
+        tamanho: 250,
+        quadrado: true,
+      ),
     );
   }
 
@@ -858,6 +879,11 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                 icon: const Icon(Icons.keyboard_arrow_down),
                 tooltip: 'Descer página',
               ),
+              IconButton(
+                onPressed: _excluirPaginaAtual,
+                icon: const Icon(Icons.delete),
+                tooltip: 'Excluir página',
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -919,11 +945,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                   if (tipo == 'texto') Text(valor?.toString() ?? ''),
                   if (tipo == 'video') Text(valor?.toString() ?? ''),
                   if (tipo == 'imagem')
-                    _buildImagemPreview(
-                      valor?.toString() ?? '',
-                      emptyLabel: 'Nenhuma imagem cadastrada.',
-                      invalidLabel: 'Imagem inválida.',
-                    ),
+                    _buildImagemConteudoCard(valor?.toString() ?? ''),
                   if (tipo == 'exercicio') _buildResumoExercicio(conteudo),
                 ],
               ),
@@ -944,9 +966,12 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                   icon: const Icon(Icons.delete),
                   tooltip: 'Excluir conteúdo',
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Icon(Icons.drag_handle),
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Icon(Icons.drag_handle),
+                  ),
                 ),
               ],
             ),
@@ -987,6 +1012,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                   child: Text('Esta página ainda não possui conteúdos.'),
                 )
               : ReorderableListView(
+                  buildDefaultDragHandles: false,
                   onReorder: _reordenarConteudos,
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [

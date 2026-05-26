@@ -140,7 +140,7 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
                   // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
                   onPressed: () => Navigator.pushNamed(context, "/"),
                   child: Text(
-                    "Entrar como usuário normal",
+                    "Entrar como aluno",
                     style: TextStyle(color: Colors.blue[900]),
                   ),
                 ),

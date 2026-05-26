@@ -1,43 +1,74 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import 'basecard.dart';
+import 'conteudo.dart';
+import 'leaderboard.dart';
 import 'models.dart';
-// Certifique-se de importar os arquivos da LeaderboardPage e da CustomBottomNavBar 
-// caso eles estejam em arquivos separados no seu projeto.
- import 'leaderboard.dart';
 import 'navmenu.dart';
 
-final List<LessonModel> _aulasData = [
-  LessonModel(
-    id: '1',
-    title: 'Introdução ao Carbono',
-    estimatedTime: '12 min',
-    imageUrl: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=200',
-  ),
-  LessonModel(
-    id: '2',
-    title: 'Cadeias Carbônicas',
-    estimatedTime: '18 min',
-    imageUrl: 'https://images.unsplash.com/photo-1532187875605-2fe35851146a?w=200',
-  ),
-  LessonModel(
-    id: '3',
-    title: 'Hidrocarbonetos',
-    estimatedTime: '25 min',
-    imageUrl: 'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=200',
-  ),
-];
-
 class LessonsScreen extends StatefulWidget {
+  final String idModulo;
   final String moduleTitle;
 
-  const LessonsScreen({super.key, required this.moduleTitle});
+  const LessonsScreen({
+    super.key,
+    required this.idModulo,
+    required this.moduleTitle,
+  });
 
   @override
   State<LessonsScreen> createState() => _LessonsScreenState();
 }
 
 class _LessonsScreenState extends State<LessonsScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   int _selectedIndex = 0;
+  bool _isLoading = true;
+  List<LessonModel> _aulas = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarAulas();
+  }
+
+  Future<void> _carregarAulas() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+
+    try {
+      snapshot = await _firestore
+          .collection('aula')
+          .where('idModulo', isEqualTo: widget.idModulo)
+          .orderBy('ordem')
+          .get();
+    } catch (_) {
+      snapshot = await _firestore
+          .collection('aula')
+          .where('idModulo', isEqualTo: widget.idModulo)
+          .get();
+    }
+
+    final docs = snapshot.docs.toList()
+      ..sort(
+        (a, b) => ((a.data()['ordem'] ?? 0) as num)
+            .compareTo((b.data()['ordem'] ?? 0) as num),
+      );
+
+    if (!mounted) return;
+
+    setState(() {
+      _aulas = docs
+          .map((doc) => LessonModel.fromMap(doc.data(), doc.id))
+          .toList();
+      _isLoading = false;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -47,34 +78,43 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Aba 0: Scaffold individual protegendo a tela de aulas e sua AppBar
     final telaAulas = Scaffold(
       appBar: AppBar(
-        title: Text(widget.moduleTitle), // Acessa o título passado no construtor
+        title: Text(widget.moduleTitle),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          for (var lesson in _aulasData)
-            LessonCard(
-              lesson: lesson,
-              onTap: () {
-                Navigator.pushNamed(context, "/conteudo");
-              },
-            ),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _aulas.isEmpty
+              ? const Center(child: Text('Nenhuma aula cadastrada.'))
+              : ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    for (final lesson in _aulas)
+                      LessonCard(
+                        lesson: lesson,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Conteudo(
+                                idAula: lesson.id,
+                                tituloAula: lesson.title,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
     );
 
-    // Array contendo as páginas completas para alternância
     final List<Widget> telas = [
       telaAulas,
-      const LeaderboardPage(), // Renderiza a página de ranking que criamos antes
+      const LeaderboardPage(),
     ];
 
-    // Scaffold Principal que gerencia apenas a troca de corpo e o menu inferior
     return Scaffold(
       body: telas[_selectedIndex],
       bottomNavigationBar: CustomBottomNavBar(
