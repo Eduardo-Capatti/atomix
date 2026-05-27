@@ -382,7 +382,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                     const SizedBox(height: 8),
                     Text('ID: ${aula.id}'),
                     const SizedBox(height: 4),
-                    Text('Tempo estimado: $tempoEstimado'),
+                    Text('Tempo estimado: $tempoEstimado minutos'),
                     const SizedBox(height: 4),
                   ],
                 ),

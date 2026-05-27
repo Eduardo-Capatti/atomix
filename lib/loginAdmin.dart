@@ -20,20 +20,23 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
     try {
 
       //login deu certo!
-      if (txtEmail.text.trim() == "admin@email.com" && txtSenha.text == "123456") {
-        UserCredential credencial = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: txtEmail.text
-              .trim(), //limpa espaços vazios que o usuário possa ter digitado sem querer
-          password: txtSenha.text,
+      if (txtEmail.text.trim() != "admin@email.com" && txtSenha.text != "123456") {
+        throw FirebaseAuthException(
+          code: 'invalid-credential'
         );
+      }
+      UserCredential credencial = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: txtEmail.text
+            .trim(), //limpa espaços vazios que o usuário possa ter digitado sem querer
+        password: txtSenha.text,
+      );
 
-        //login deu certo!
-        if (mounted) {
-          String idUsuario = credencial.user!.uid;
-          String nomeUsuario = credencial.user!.displayName ?? "";
-          formarSession(idUsuario, nomeUsuario, true);
-          Navigator.pushReplacementNamed(context, "/moduloAdmin");
-        }
+      //login deu certo!
+      if (mounted) {
+        String idUsuario = credencial.user!.uid;
+        String nomeUsuario = credencial.user!.displayName ?? "";
+        formarSession(idUsuario, nomeUsuario, true);
+        Navigator.pushReplacementNamed(context, "/moduloAdmin");
       }
     } on FirebaseAuthException catch (ex) {
       //Tratamento de erros (ex: senha errada, usuário não existe)
