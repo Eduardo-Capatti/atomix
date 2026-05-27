@@ -250,7 +250,10 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     });
   }
 
-  Future<void> _salvarConteudosPaginaAtual(List<Map<String, dynamic>> conteudos) async {
+  Future<void> _salvarConteudosPaginaAtual(
+    List<Map<String, dynamic>> conteudos, {
+    bool recarregarPagina = true,
+  }) async {
     final pagina = _paginaAtualDoc;
 
     if (pagina == null) {
@@ -261,10 +264,13 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       'conteudos': _normalizarConteudos(conteudos),
     });
 
-    await _carregarPaginas(
-      paginaDesejada:
-          (_paginaAtualData['pagina'] as num?)?.toInt() ?? (_paginaAtualIndex + 1),
-    );
+    if (recarregarPagina) {
+      await _carregarPaginas(
+        paginaDesejada:
+            (_paginaAtualData['pagina'] as num?)?.toInt() ??
+            (_paginaAtualIndex + 1),
+      );
+    }
   }
 
   Future<void> _excluirConteudo(int index) async {
@@ -297,42 +303,56 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }) async {
     String tipo = conteudo?['tipo']?.toString() ?? 'texto';
     String tipo2 = conteudo?['tipo2']?.toString() ?? 'texto';
-    String imagemBase64 = tipo == 'imagem' ? (conteudo?['conteudo']?.toString() ?? '') : '';
+
+    String imagemBase64 =
+        tipo == 'imagem' ? (conteudo?['conteudo']?.toString() ?? '') : '';
+
     final conteudoController = TextEditingController(
-      text: tipo == 'imagem' ? imagemBase64 : conteudo?['conteudo']?.toString() ?? '',
+      text: tipo == 'imagem'
+          ? imagemBase64
+          : conteudo?['conteudo']?.toString() ?? '',
     );
+
     final perguntaController = TextEditingController(
       text: conteudo?['pergunta']?.toString() ?? '',
     );
+
     final bool editando = conteudo != null;
+
     final respostasIniciais = tipo == 'exercicio'
         ? List<String>.from(conteudo?['conteudo'] as List? ?? [])
         : <String>[];
+
     final respostaControllers = respostasIniciais.isEmpty
         ? <TextEditingController>[
             TextEditingController(),
             TextEditingController(),
           ]
-        : respostasIniciais.map((item) => TextEditingController(text: item)).toList();
+        : respostasIniciais
+            .map((item) => TextEditingController(text: item))
+            .toList();
+
     final respostasImagem = respostasIniciais.isEmpty
         ? <String>['', '']
         : List<String>.from(respostasIniciais);
-    int respostaCorreta = (((conteudo?['resposta'] as num?)?.toInt() ?? 1).clamp(
+
+    int respostaCorreta =
+        (((conteudo?['resposta'] as num?)?.toInt() ?? 1).clamp(
       1,
       respostasIniciais.isEmpty ? 2 : respostasIniciais.length,
     ) as num)
-        .toInt();
-    String? erroFormulario;
+            .toInt();
 
-    Future<void> selecionarImagemResposta(
-      int respostaIndex,
-      StateSetter setDialogState,
-    ) async {
+    String? erroFormulario;
+    final telaContext = context;
+
+  Future<void> selecionarImagemResposta(
+    int respostaIndex,
+    StateSetter setDialogState,
+  ) async {
       final imagem = await selecionarImagemBase64();
 
-      if (imagem == null) {
-        return;
-      }
+      if (imagem == null) return;
 
       setDialogState(() {
         respostasImagem[respostaIndex] = imagem;
@@ -340,11 +360,11 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       });
     }
 
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
+    final salvou = await showDialog<bool>(
+      context: telaContext,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               title: Text(editando ? 'Editar conteúdo' : 'Novo conteúdo'),
               content: SizedBox(
@@ -364,12 +384,13 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           DropdownMenuItem(value: 'texto', child: Text('Texto')),
                           DropdownMenuItem(value: 'imagem', child: Text('Imagem')),
                           DropdownMenuItem(value: 'video', child: Text('Vídeo')),
-                          DropdownMenuItem(value: 'exercicio', child: Text('Exercício')),
+                          DropdownMenuItem(
+                            value: 'exercicio',
+                            child: Text('Exercício'),
+                          ),
                         ],
                         onChanged: (value) {
-                          if (value == null) {
-                            return;
-                          }
+                          if (value == null) return;
 
                           setDialogState(() {
                             tipo = value;
@@ -383,7 +404,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                               perguntaController.clear();
                             }
 
-                            if (tipo == 'exercicio' && respostaControllers.length < 2) {
+                            if (tipo == 'exercicio' &&
+                                respostaControllers.length < 2) {
                               respostaControllers.add(TextEditingController());
                               respostaControllers.add(TextEditingController());
                               respostasImagem.add('');
@@ -393,7 +415,9 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           });
                         },
                       ),
+
                       const SizedBox(height: 16),
+
                       if (tipo == 'texto')
                         TextField(
                           controller: conteudoController,
@@ -403,6 +427,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             border: OutlineInputBorder(),
                           ),
                         ),
+
                       if (tipo == 'video')
                         TextField(
                           controller: conteudoController,
@@ -411,6 +436,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             border: OutlineInputBorder(),
                           ),
                         ),
+
                       if (tipo == 'imagem') ...[
                         SizedBox(
                           width: double.infinity,
@@ -418,9 +444,9 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             onPressed: () async {
                               final imagem = await selecionarImagemBase64();
 
-                              if (imagem == null) {
-                                return;
-                              }
+                              if (imagem == null) return;
+
+                              if (!dialogContext.mounted) return;
 
                               setDialogState(() {
                                 imagemBase64 = imagem;
@@ -439,6 +465,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           invalidLabel: 'A imagem informada é inválida.',
                         ),
                       ],
+
                       if (tipo == 'exercicio') ...[
                         DropdownButtonFormField<String>(
                           initialValue: tipo2,
@@ -451,9 +478,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             DropdownMenuItem(value: 'imagem', child: Text('Imagem')),
                           ],
                           onChanged: (value) {
-                            if (value == null) {
-                              return;
-                            }
+                            if (value == null) return;
 
                             setDialogState(() {
                               tipo2 = value;
@@ -461,7 +486,9 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             });
                           },
                         ),
+
                         const SizedBox(height: 16),
+
                         TextField(
                           controller: perguntaController,
                           maxLines: 3,
@@ -470,7 +497,9 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             border: OutlineInputBorder(),
                           ),
                         ),
+
                         const SizedBox(height: 16),
+
                         Row(
                           children: [
                             const Expanded(
@@ -485,7 +514,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             TextButton.icon(
                               onPressed: () {
                                 setDialogState(() {
-                                  respostaControllers.add(TextEditingController());
+                                  respostaControllers
+                                      .add(TextEditingController());
                                   respostasImagem.add('');
                                 });
                               },
@@ -494,7 +524,9 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                             ),
                           ],
                         ),
+
                         const SizedBox(height: 8),
+
                         for (int i = 0; i < respostaControllers.length; i++) ...[
                           Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -512,9 +544,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                       value: i + 1,
                                       groupValue: respostaCorreta,
                                       onChanged: (value) {
-                                        if (value == null) {
-                                          return;
-                                        }
+                                        if (value == null) return;
 
                                         setDialogState(() {
                                           respostaCorreta = value;
@@ -528,16 +558,22 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                       IconButton(
                                         onPressed: () {
                                           setDialogState(() {
-                                            respostaControllers.removeAt(i).dispose();
+                                            final controllerRemovido =
+                                                respostaControllers.removeAt(i);
+
                                             respostasImagem.removeAt(i);
 
-                                            if (respostaCorreta > respostaControllers.length) {
-                                              respostaCorreta = respostaControllers.length;
+                                            if (respostaCorreta >
+                                                respostaControllers.length) {
+                                              respostaCorreta =
+                                                  respostaControllers.length;
                                             }
 
                                             if (respostaCorreta < 1) {
                                               respostaCorreta = 1;
                                             }
+
+                                            controllerRemovido.dispose();
                                           });
                                         },
                                         icon: const Icon(Icons.delete),
@@ -545,6 +581,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                       ),
                                   ],
                                 ),
+
                                 if (tipo2 == 'texto')
                                   TextField(
                                     controller: respostaControllers[i],
@@ -553,11 +590,15 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                       border: OutlineInputBorder(),
                                     ),
                                   ),
+
                                 if (tipo2 == 'imagem') ...[
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton.icon(
-                                      onPressed: () => selecionarImagemResposta(i, setDialogState),
+                                      onPressed: () => selecionarImagemResposta(
+                                        i,
+                                        setDialogState,
+                                      ),
                                       icon: const Icon(Icons.upload),
                                       label: Text('Selecionar imagem ${i + 1}'),
                                     ),
@@ -566,7 +607,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                   _buildImagemPreview(
                                     respostasImagem[i],
                                     emptyLabel: 'Nenhuma imagem selecionada.',
-                                    invalidLabel: 'A imagem informada é inválida.',
+                                    invalidLabel:
+                                        'A imagem informada é inválida.',
                                   ),
                                 ],
                               ],
@@ -574,6 +616,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           ),
                         ],
                       ],
+
                       if (erroFormulario != null) ...[
                         const SizedBox(height: 12),
                         Text(
@@ -587,12 +630,14 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final conteudos = List<Map<String, dynamic>>.from(_conteudosPaginaAtual);
+                    final conteudos =
+                        List<Map<String, dynamic>>.from(_conteudosPaginaAtual);
+
                     Map<String, dynamic>? novoConteudo;
 
                     if (tipo == 'texto' || tipo == 'video') {
@@ -600,7 +645,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
                       if (valor.isEmpty) {
                         setDialogState(() {
-                          erroFormulario = 'Preencha o conteúdo antes de salvar.';
+                          erroFormulario =
+                              'Preencha o conteúdo antes de salvar.';
                         });
                         return;
                       }
@@ -617,7 +663,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
                       if (valor.isEmpty) {
                         setDialogState(() {
-                          erroFormulario = 'Selecione uma imagem antes de salvar.';
+                          erroFormulario =
+                              'Selecione uma imagem antes de salvar.';
                         });
                         return;
                       }
@@ -647,21 +694,24 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
                       if (pergunta.isEmpty) {
                         setDialogState(() {
-                          erroFormulario = 'Preencha a pergunta do exercício.';
+                          erroFormulario =
+                              'Preencha a pergunta do exercício.';
                         });
                         return;
                       }
 
                       if (respostas.length < 2) {
                         setDialogState(() {
-                          erroFormulario = 'O exercício precisa de pelo menos 2 respostas.';
+                          erroFormulario =
+                              'O exercício precisa de pelo menos 2 respostas.';
                         });
                         return;
                       }
 
                       if (respostas.any((item) => item.isEmpty)) {
                         setDialogState(() {
-                          erroFormulario = 'Preencha todas as respostas antes de salvar.';
+                          erroFormulario =
+                              'Preencha todas as respostas antes de salvar.';
                         });
                         return;
                       }
@@ -688,9 +738,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                       };
                     }
 
-                    if (novoConteudo == null) {
-                      return;
-                    }
+                    if (novoConteudo == null) return;
 
                     if (editando && index != null) {
                       conteudos[index] = novoConteudo;
@@ -698,13 +746,13 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                       conteudos.add(novoConteudo);
                     }
 
-                    await _salvarConteudosPaginaAtual(conteudos);
+                    await _salvarConteudosPaginaAtual(
+                      conteudos,
+                      recarregarPagina: false,
+                    );
 
-                    if (!context.mounted) {
-                      return;
-                    }
-
-                    Navigator.pop(context);
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop(true);
                   },
                   child: const Text('Salvar'),
                 ),
@@ -714,6 +762,16 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
         );
       },
     );
+
+    if (salvou == true) {
+      if (!mounted) return;
+
+      await _carregarPaginas(
+        paginaDesejada:
+            (_paginaAtualData['pagina'] as num?)?.toInt() ??
+            (_paginaAtualIndex + 1),
+      );
+    }
 
     conteudoController.dispose();
     perguntaController.dispose();
@@ -1076,7 +1134,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                   child: Text('Nenhuma página cadastrada. Use o botão no topo para adicionar.'),
                 )
               : Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(25),
                   child: Column(
                     children: [
                       _buildCabecalhoPaginas(),

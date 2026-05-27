@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:atomix/modulo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'session.dart';
@@ -108,115 +107,117 @@ class _CadastroPageState extends State<CadastroPage> {
         elevation: 0,
         foregroundColor: Colors.blue[900],
       ),
-      body: Container(
-        margin: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          // Adicionado para evitar erro de tela pequena com o teclado
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.person_add_outlined,
-                size: 80,
-                color: Colors.blue[900],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Cadastro",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            // Adicionado para evitar erro de tela pequena com o teclado
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_add_outlined,
+                  size: 80,
                   color: Colors.blue[900],
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: txtNome,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "Nome",
-                  prefixIcon: Icon(
-                    Icons.person_outline,
-                    color: Colors.blue[800],
+                const SizedBox(height: 16),
+                Text(
+                  "Cadastro",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[900],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: txtEmail,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "E-mail",
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: Colors.blue[800],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: txtSenha,
-                obscureText: esconderSenha,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "Senha",
-                  prefixIcon: Icon(
-                    Icons.password_outlined,
-                    color: Colors.blue[800],
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        esconderSenha = !esconderSenha;
-                      });
-                    },
-                    icon: Icon(
-                      esconderSenha ? Icons.visibility_off : Icons.visibility,
+                const SizedBox(height: 16),
+                TextField(
+                  controller: txtNome,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "Nome",
+                    prefixIcon: Icon(
+                      Icons.person_outline,
                       color: Colors.blue[800],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: txtRepetirSenha,
-                obscureText: esconderRepetirSenha,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "Repetir senha",
-                  prefixIcon: Icon(
-                    Icons.password_outlined,
-                    color: Colors.blue[800],
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        esconderRepetirSenha = !esconderRepetirSenha;
-                      });
-                    },
-                    icon: Icon(
-                      esconderRepetirSenha
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                const SizedBox(height: 16),
+                TextField(
+                  controller: txtEmail,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "E-mail",
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
                       color: Colors.blue[800],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(
-                    50,
-                  ), // Deixa o botão mais largo
+                const SizedBox(height: 16),
+                TextField(
+                  controller: txtSenha,
+                  obscureText: esconderSenha,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "Senha",
+                    prefixIcon: Icon(
+                      Icons.password_outlined,
+                      color: Colors.blue[800],
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          esconderSenha = !esconderSenha;
+                        });
+                      },
+                      icon: Icon(
+                        esconderSenha ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                  ),
                 ),
-                // Chama a nossa nova função passando o context
-                onPressed: () => onRegister(context),
-                child: const Text("Criar conta"),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: txtRepetirSenha,
+                  obscureText: esconderRepetirSenha,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "Repetir senha",
+                    prefixIcon: Icon(
+                      Icons.password_outlined,
+                      color: Colors.blue[800],
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          esconderRepetirSenha = !esconderRepetirSenha;
+                        });
+                      },
+                      icon: Icon(
+                        esconderRepetirSenha
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[800],
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(
+                      50,
+                    ), // Deixa o botão mais largo
+                  ),
+                  // Chama a nossa nova função passando o context
+                  onPressed: () => onRegister(context),
+                  child: const Text("Criar conta"),
+                ),
+              ],
+            ),
           ),
         ),
       ),

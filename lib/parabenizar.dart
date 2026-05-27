@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 import 'session.dart';
 import 'aula.dart';
+import 'package:audioplayers/audioplayers.dart';
+
 
 List<String> imagem = [
   "assets/images/camaleaoPensativo.jpeg",
@@ -30,6 +32,12 @@ class Parabenizar extends StatefulWidget {
 }
 
 class ParabenizarState extends State<Parabenizar> {
+  final player = AudioPlayer();
+
+  void tocarAudio() async {
+    await player.play(AssetSource('sounds/aulaCompleta.wav'));
+  }
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   void concluir() async{
     await _firestore
@@ -60,6 +68,11 @@ class ParabenizarState extends State<Parabenizar> {
       (route) => route.isFirst,
     );
 
+  }
+
+  @override initState(){
+    super.initState();
+    tocarAudio();
   }
   
   int randomInt = Random().nextInt(2);

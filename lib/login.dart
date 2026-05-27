@@ -1,5 +1,4 @@
 //Importação necessária para o login
-import 'package:atomix/modulo.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'session.dart';

@@ -2,6 +2,7 @@ import 'package:atomix/parabenizar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'base64.dart';
 
@@ -24,6 +25,16 @@ class Conteudo extends StatefulWidget {
 }
 
 class ConteudoState extends State<Conteudo> {
+  final player = AudioPlayer();
+
+  void tocarAudio(bool acerto) async {
+    if(acerto){
+      await player.play(AssetSource('sounds/acerto.wav'));
+    }else{
+      await player.play(AssetSource('sounds/erro.mp3'));
+    }
+  }
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   YoutubePlayerController? _youtubeController;
@@ -557,6 +568,7 @@ class ConteudoState extends State<Conteudo> {
   }
 
   void responderExercicio(bool resposta) {
+    tocarAudio(resposta);
     setState(() {
       if (resposta) {
         resultado = Container(
@@ -703,21 +715,28 @@ class ConteudoState extends State<Conteudo> {
           toolbarHeight: 80,
           backgroundColor: Colors.blue,
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Wrap(
-                spacing: 10,
-                children: [
-                  InkWell(
-                    hoverColor: Colors.transparent,
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    onTap: sairAula,
-                    child: Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  Text(tituloAula, style: const TextStyle(color: Colors.white)),
-                ],
+              InkWell(
+                hoverColor: Colors.transparent,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: sairAula,
+                child: const Icon(Icons.arrow_back, color: Colors.white),
               ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Text(
+                  tituloAula,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
               Text(
                 paginas.isEmpty ? '0/0' : '$paginaAtual/$paginaTotal',
                 style: const TextStyle(

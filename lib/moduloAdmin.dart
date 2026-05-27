@@ -106,11 +106,13 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     final bool editando = modulo != null;
     String dificuldade = modulo?.data()['dificuldade']?.toString() ?? 'Fácil';
 
+    final telaContext = context;
+
     await showDialog<void>(
-      context: context,
-      builder: (context) {
+      context: telaContext,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               title: Text(editando ? 'Editar módulo' : 'Novo módulo'),
               content: Column(
@@ -146,16 +148,14 @@ class _ModuloAdminState extends State<ModuloAdmin> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     final titulo = tituloController.text.trim();
 
-                    if (titulo.isEmpty) {
-                      return;
-                    }
+                    if (titulo.isEmpty) return;
 
                     if (editando) {
                       await _firestore
@@ -177,9 +177,8 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                       });
                     }
 
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                    await _carregarModulos();
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Salvar'),
                 ),
@@ -190,8 +189,11 @@ class _ModuloAdminState extends State<ModuloAdmin> {
       },
     );
 
+    if (!mounted) return;
+    await _carregarModulos();
+
     tituloController.dispose();
-  }
+}
 
   Widget _buildModuloCard(
     QueryDocumentSnapshot<Map<String, dynamic>> modulo,

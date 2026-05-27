@@ -27,7 +27,6 @@ Future<bool> verificarSession() async{
   final prefs = await SharedPreferences.getInstance();
   String? idUsuario = prefs.getString("idUsuario");
   String? nomeUsuario = prefs.getString("nomeUsuario");
-  bool adminUsuario = prefs.getBool("adminUsuario") ?? false;
 
   if(nomeUsuario != null && idUsuario != null){
     return true;

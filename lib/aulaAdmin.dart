@@ -187,11 +187,12 @@ class _AulaAdminState extends State<AulaAdmin> {
     String imagemBase64 = aula?.data()['url']?.toString() ?? '';
     String? erroFormulario;
 
+    final telaContext = context;
     await showDialog<void>(
-      context: context,
-      builder: (context) {
+      context: telaContext,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               title: Text(editando ? 'Editar aula' : 'Nova aula'),
               content: SizedBox(
@@ -264,12 +265,15 @@ class _AulaAdminState extends State<AulaAdmin> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     final titulo = tituloController.text.trim();
+                    
+                    if (titulo.isEmpty) return;
+
                     final tempoEstimado = tempoEstimadoController.text.trim();
                     final url = imagemBase64.trim();
                     final totalXPTexto = totalXPController.text.trim();
@@ -320,9 +324,8 @@ class _AulaAdminState extends State<AulaAdmin> {
                       await _atualizarQuantidadeAulasModulo(1);
                     }
 
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                    await _carregarAulas();
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Salvar'),
                 ),
@@ -332,6 +335,9 @@ class _AulaAdminState extends State<AulaAdmin> {
         );
       },
     );
+
+    if (!mounted) return;
+    await _carregarAulas();
 
     tituloController.dispose();
     totalXPController.dispose();
