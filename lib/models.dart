@@ -19,12 +19,10 @@ class ModuleModel {
         (map['completedLessons'] as num?)?.toInt() ?? 0;
     return ModuleModel(
       id: id,
-      title: map['titulo']?.toString() ?? map['title']?.toString() ?? '',
+      title: map['titulo']?.toString() ?? '',
       totalLessons: totalLessons,
       completedLessons: completedLessons.clamp(0, totalLessons).toInt(),
-      difficulty: map['dificuldade']?.toString() ??
-          map['difficulty']?.toString() ??
-          'Iniciante',
+      difficulty: map['dificuldade']?.toString() ?? 'Fácil',
     );
   }
 
@@ -49,11 +47,8 @@ class LessonModel {
     return LessonModel(
       id: id,
       title: map['titulo']?.toString() ?? map['title']?.toString() ?? '',
-      estimatedTime: map['tempoEstimado']?.toString() ??
-          map['estimatedTime']?.toString() ??
-          '',
-      imageUrl:
-          map['url']?.toString() ?? map['imageUrl']?.toString() ?? '',
+      estimatedTime: map['tempoEstimado']?.toString() ?? '',
+      imageUrl: map['url']?.toString() ?? '',
     );
   }
 }

@@ -549,9 +549,9 @@
     },
     {
       "name": "url_launcher_android",
-      "rootUri": "file:///C:/Users/Eduardo/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.29",
+      "rootUri": "file:///C:/Users/Eduardo/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.30",
       "packageUri": "lib/",
-      "languageVersion": "3.9"
+      "languageVersion": "3.10"
     },
     {
       "name": "url_launcher_ios",

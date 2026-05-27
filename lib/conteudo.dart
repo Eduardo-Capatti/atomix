@@ -356,8 +356,9 @@ class ConteudoState extends State<Conteudo> {
     _youtubeController = YoutubePlayerController.fromVideoId(
       videoId: videoId,
       autoPlay: false,
-      params: const YoutubePlayerParams(
+      params: YoutubePlayerParams(
         showFullscreenButton: true,
+        playsInline: true,
       ),
     );
 

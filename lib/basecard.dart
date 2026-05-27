@@ -106,8 +106,8 @@ class LessonCard extends StatelessWidget {
 
   Widget _buildFallbackImage() {
     return Container(
-      width: 80,
-      height: 60,
+      width: double.infinity,
+      height: double.infinity,
       color: Colors.grey[300],
       child: const Icon(Icons.broken_image),
     );
@@ -121,7 +121,7 @@ class LessonCard extends StatelessWidget {
         bytes,
         width: 80,
         height: 60,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (context, error, stack) => _buildFallbackImage(),
       );
     }
@@ -130,7 +130,7 @@ class LessonCard extends StatelessWidget {
       lesson.imageUrl,
       width: 80,
       height: 60,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
       errorBuilder: (context, error, stack) => _buildFallbackImage(),
     );
   }
@@ -169,7 +169,7 @@ class LessonCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        lesson.estimatedTime,
+                        "${lesson.estimatedTime} minutos",
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],
