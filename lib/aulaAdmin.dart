@@ -141,7 +141,6 @@ class _AulaAdminState extends State<AulaAdmin> {
       borderRadius: BorderRadius.circular(12),
       child: Image.memory(
         bytes,
-        height: altura,
         width: double.infinity,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
@@ -360,12 +359,14 @@ class _AulaAdminState extends State<AulaAdmin> {
       elevation: 0,
       child: CustomAppCard(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 5,
           children: [
             Column(
+              spacing: 5,
               children: [
-                SizedBox(
-                  width: 130,
+                FractionallySizedBox(
+                  widthFactor: 1.0,
                   child: _buildImagemPreview(url),
                 ),
                 Column(
@@ -388,7 +389,7 @@ class _AulaAdminState extends State<AulaAdmin> {
               ],
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 IconButton(
                   onPressed: () => _abrirDialogoAula(aula: aula),

@@ -803,8 +803,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: quadrado ? tamanho : double.infinity,
-        height: tamanho,
+        width: double.infinity,
         child: Image.memory(
           bytes,
           fit: BoxFit.cover,
@@ -985,31 +984,26 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       color: Colors.transparent,
       elevation: 0,
       child: CustomAppCard(
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 5,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ordem ${conteudo['ordem']} • ${tipo.toUpperCase()}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (tipo == 'texto') Text(valor?.toString() ?? ''),
-                  if (tipo == 'video') Text(valor?.toString() ?? ''),
-                  if (tipo == 'imagem')
-                    _buildImagemConteudoCard(valor?.toString() ?? ''),
-                  if (tipo == 'exercicio') _buildResumoExercicio(conteudo),
-                ],
+            Text(
+              'Ordem ${conteudo['ordem']} • ${tipo.toUpperCase()}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
+            const SizedBox(height: 12),
+            if (tipo == 'texto') Text(valor?.toString() ?? ''),
+            if (tipo == 'video') Text(valor?.toString() ?? ''),
+            if (tipo == 'imagem')
+              _buildImagemConteudoCard(valor?.toString() ?? ''),
+            if (tipo == 'exercicio') _buildResumoExercicio(conteudo),
             const SizedBox(width: 12),
-            Column(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
                   onPressed: () => _abrirDialogoConteudo(

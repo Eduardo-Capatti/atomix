@@ -210,50 +210,51 @@ class _ModuloAdminState extends State<ModuloAdmin> {
       color: Colors.transparent,
       elevation: 0,
       child: CustomAppCard(
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 5,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titulo,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            Text(
+              titulo,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('ID: ${modulo.id}'),
+            const SizedBox(height: 4),
+            Text('Dificuldade: $dificuldade'),
+            const SizedBox(height: 4),
+            Text('Quantidade de aulas: $quantidade'),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children:[
+                IconButton(
+                  onPressed: () => _abrirDialogoModulo(modulo: modulo),
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Editar módulo',
+                ),
+                IconButton(
+                  onPressed: () => _excluirModulo(modulo.id),
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Excluir módulo',
+                ),
+                IconButton(
+                  onPressed: () => _acessarAula(modulo.id, quantidade),
+                  icon: const Icon(Icons.remove_red_eye),
+                  tooltip: 'Acessar aulas do módulo',
+                ),
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.drag_handle),
                   ),
-                  const SizedBox(height: 8),
-                  Text('ID: ${modulo.id}'),
-                  const SizedBox(height: 4),
-                  Text('Dificuldade: $dificuldade'),
-                  const SizedBox(height: 4),
-                  Text('Quantidade de aulas: $quantidade'),
-                ],
-              ),
-            ),
-            IconButton(
-              onPressed: () => _abrirDialogoModulo(modulo: modulo),
-              icon: const Icon(Icons.edit),
-              tooltip: 'Editar módulo',
-            ),
-            IconButton(
-              onPressed: () => _excluirModulo(modulo.id),
-              icon: const Icon(Icons.delete),
-              tooltip: 'Excluir módulo',
-            ),
-            IconButton(
-              onPressed: () => _acessarAula(modulo.id, quantidade),
-              icon: const Icon(Icons.remove_red_eye),
-              tooltip: 'Acessar aulas do módulo',
-            ),
-            ReorderableDragStartListener(
-              index: index,
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.drag_handle),
-              ),
-            ),
+                ),
+              ]
+            )
           ],
         ),
       ),
