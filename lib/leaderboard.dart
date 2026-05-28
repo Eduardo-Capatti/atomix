@@ -13,6 +13,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>{
   Future<List<Map<String, dynamic>>> rankingUsers() async{
       QuerySnapshot snapshot = await FirebaseFirestore.instance
       .collection('usuarios')
+      .orderBy('xp', descending: true)
       .limit(50)
       .get();
 

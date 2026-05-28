@@ -11,13 +11,15 @@ class Conteudo extends StatefulWidget {
   final String tituloAula;
   final String idModulo;
   final String moduleTitle;
+  final int totalXP;
 
   const Conteudo({
     super.key,
     required this.idAula,
     required this.tituloAula,
     required this.idModulo,
-    required this.moduleTitle
+    required this.moduleTitle,
+    required this.totalXP
   });
 
   @override
@@ -47,7 +49,7 @@ class ConteudoState extends State<Conteudo> {
   Widget? resultado;
   int? respostaSelecionada;
   String tituloAula = '';
-  int totalXP = 20;
+  late int totalXP = widget.totalXP;
   int totalPerdeXP = 4;
   int countRespostaErrada = 0;
   int maxRespostaErrada = 3;
@@ -127,7 +129,7 @@ class ConteudoState extends State<Conteudo> {
       return;
     }
 
-    final xp = (paginasOrdenadas.first['totalXP'] as num?)?.toInt() ?? 20;
+    final xp = totalXP;
 
     setState(() {
       paginas = paginasOrdenadas;
@@ -529,10 +531,7 @@ class ConteudoState extends State<Conteudo> {
 
   void reiniciarAula() {
     setState(() {
-      final xpInicial = (paginas.isNotEmpty
-              ? (paginas.first['totalXP'] as num?)?.toInt()
-              : null) ??
-          totalXP;
+      final xpInicial = totalXP;
 
       paginaAtual = 1;
       resultado = null;

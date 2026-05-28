@@ -111,7 +111,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
                                 idAula: lesson.id,
                                 tituloAula: lesson.title,
                                 idModulo: widget.idModulo,
-                                moduleTitle: widget.moduleTitle
+                                moduleTitle: widget.moduleTitle,
+                                totalXP: lesson.totalXP
                               ),
                             ),
                           );

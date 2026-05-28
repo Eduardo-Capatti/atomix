@@ -35,12 +35,14 @@ class LessonModel {
   final String title;
   final String estimatedTime;
   final String imageUrl;
+  final int totalXP;
 
   LessonModel({
     required this.id,
     required this.title,
     required this.estimatedTime,
     required this.imageUrl,
+    required this.totalXP
   });
 
   factory LessonModel.fromMap(Map<String, dynamic> map, String id) {
@@ -49,6 +51,7 @@ class LessonModel {
       title: map['titulo']?.toString() ?? map['title']?.toString() ?? '',
       estimatedTime: map['tempoEstimado']?.toString() ?? '',
       imageUrl: map['url']?.toString() ?? '',
+      totalXP: map['totalXP'] ?? 0,
     );
   }
 }
