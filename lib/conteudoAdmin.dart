@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -23,11 +24,36 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginas = [];
   bool _isLoading = true;
   int _paginaAtualIndex = 0;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _paginasListener;
+  bool _ignorarListener = false;
 
   @override
   void initState() {
     super.initState();
-    _carregarPaginas();
+    _iniciarListenerPaginas();
+  }
+
+  void _iniciarListenerPaginas() {
+    _paginasListener = _firestore
+        .collection('conteudo')
+        .where('idAula', isEqualTo: widget.idAula)
+        .snapshots()
+        .listen(
+      (_) async {
+        if (_ignorarListener) return;
+        await _carregarPaginas();
+      },
+      onError: (error) async {
+        if (_ignorarListener) return;
+        await _carregarPaginas();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _paginasListener?.cancel();
+    super.dispose();
   }
 
   bool get _temPaginas => _paginas.isNotEmpty;
@@ -158,6 +184,16 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     return alterou;
   }
 
+  Future<void> _executarSemListener(Future<void> Function() acao) async {
+    _ignorarListener = true;
+
+    try {
+      await acao();
+    } finally {
+      _ignorarListener = false;
+    }
+  }
+
   bool _listaConteudosIgual(dynamic original, List<Map<String, dynamic>> normalizado) {
     if (original is! List) {
       return normalizado.isEmpty;
@@ -182,17 +218,19 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   Future<void> _adicionarPagina() async {
-    final novoDoc = _firestore.collection('conteudo').doc();
-    final proximaPagina = _paginas.length + 1;
+    await _executarSemListener(() async {
+      final novoDoc = _firestore.collection('conteudo').doc();
+      final proximaPagina = _paginas.length + 1;
 
-    await novoDoc.set({
-      'id': novoDoc.id,
-      'idAula': widget.idAula,
-      'pagina': proximaPagina,
-      'conteudos': <Map<String, dynamic>>[],
+      await novoDoc.set({
+        'id': novoDoc.id,
+        'idAula': widget.idAula,
+        'pagina': proximaPagina,
+        'conteudos': <Map<String, dynamic>>[],
+      });
+
+      await _carregarPaginas(paginaDesejada: proximaPagina);
     });
-
-    await _carregarPaginas(paginaDesejada: proximaPagina);
   }
 
   Future<void> _excluirPaginaAtual() async {
@@ -204,13 +242,15 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     final paginaAtual = (_paginaAtualData['pagina'] as num?)?.toInt() ?? 1;
 
-    await _firestore.collection('conteudo').doc(pagina.id).delete();
+    await _executarSemListener(() async {
+      await _firestore.collection('conteudo').doc(pagina.id).delete();
 
-    await _carregarPaginas(
-      paginaDesejada: _paginas.length <= 1
-          ? null
-          : (paginaAtual > 1 ? paginaAtual - 1 : 1),
-    );
+      await _carregarPaginas(
+        paginaDesejada: _paginas.length <= 1
+            ? null
+            : (paginaAtual > 1 ? paginaAtual - 1 : 1),
+      );
+    });
   }
 
   Future<void> _moverPagina(int direcao) async {
@@ -229,15 +269,20 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     final numeroDestino =
         (paginaDestino.data()['pagina'] as num?)?.toInt() ?? (novoIndice + 1);
 
-    await _firestore.collection('conteudo').doc(paginaAtual.id).update({
-      'pagina': numeroDestino,
-    });
+    await _executarSemListener(() async {
+      final batch = _firestore.batch();
 
-    await _firestore.collection('conteudo').doc(paginaDestino.id).update({
-      'pagina': numeroAtual,
-    });
+      batch.update(_firestore.collection('conteudo').doc(paginaAtual.id), {
+        'pagina': numeroDestino,
+      });
 
-    await _carregarPaginas(paginaDesejada: numeroDestino);
+      batch.update(_firestore.collection('conteudo').doc(paginaDestino.id), {
+        'pagina': numeroAtual,
+      });
+
+      await batch.commit();
+      await _carregarPaginas(paginaDesejada: numeroDestino);
+    });
   }
 
   void _irParaPagina(int index) {
@@ -260,17 +305,19 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       return;
     }
 
-    await _firestore.collection('conteudo').doc(pagina.id).update({
-      'conteudos': _normalizarConteudos(conteudos),
-    });
+    await _executarSemListener(() async {
+      await _firestore.collection('conteudo').doc(pagina.id).update({
+        'conteudos': _normalizarConteudos(conteudos),
+      });
 
-    if (recarregarPagina) {
-      await _carregarPaginas(
-        paginaDesejada:
-            (_paginaAtualData['pagina'] as num?)?.toInt() ??
-            (_paginaAtualIndex + 1),
-      );
-    }
+      if (recarregarPagina) {
+        await _carregarPaginas(
+          paginaDesejada:
+              (_paginaAtualData['pagina'] as num?)?.toInt() ??
+              (_paginaAtualIndex + 1),
+        );
+      }
+    });
   }
 
   Future<void> _excluirConteudo(int index) async {
@@ -520,7 +567,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                 });
                               },
                               icon: const Icon(Icons.add),
-                              label: const Text('Adicionar resposta'),
+                              label: const Text('resposta'),
                             ),
                           ],
                         ),
@@ -1053,7 +1100,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
               ElevatedButton.icon(
                 onPressed: () => _abrirDialogoConteudo(),
                 icon: const Icon(Icons.add),
-                label: const Text('Adicionar conteúdo'),
+                label: const Text('conteúdo'),
               ),
             ],
           ),

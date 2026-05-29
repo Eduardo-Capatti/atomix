@@ -65,7 +65,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
             .get();
 
         Set<String> idsModulos = listagemUsuarioAula.docs
-          .map((doc) => doc['idModulo'] as String)
+          .map((doc) => doc['idAula'] as String)
           .toSet();
 
         final dadosModulo = Map<String, dynamic>.from(doc.data());

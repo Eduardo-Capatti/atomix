@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -18,18 +20,49 @@ class _ModuloAdminState extends State<ModuloAdmin> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _modulos = [];
   bool _isLoading = true;
 
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _modulosListener;
+  bool _ignorarListener = false;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if(!await verificarSession() || !await verificarAdmin()){
-          navegacaoSession(context, "/");  
-        }
-        _carregarModulos();
+      if (!await verificarSession() || !await verificarAdmin()) {
+        navegacaoSession(context, "/");
+        return;
+      }
+
+      _iniciarListenerModulos();
     });
   }
 
+  void _iniciarListenerModulos() {
+    _modulosListener = _firestore
+        .collection('modulo')
+        .orderBy('ordem')
+        .snapshots()
+        .listen(
+      (_) async {
+        if (_ignorarListener) return;
+        await _carregarModulos();
+      },
+      onError: (error) async {
+        if (_ignorarListener) return;
+        await _carregarModulos();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _modulosListener?.cancel();
+    super.dispose();
+  }
+
   Future<void> _carregarModulos() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -59,11 +92,15 @@ class _ModuloAdminState extends State<ModuloAdmin> {
   }
 
   Future<void> _salvarNovaOrdem() async {
+    final batch = _firestore.batch();
+
     for (int i = 0; i < _modulos.length; i++) {
-      await _firestore.collection('modulo').doc(_modulos[i].id).update({
+      batch.update(_firestore.collection('modulo').doc(_modulos[i].id), {
         'ordem': i,
       });
     }
+
+    await batch.commit();
   }
 
   Future<void> _reordenarModulos(int oldIndex, int newIndex) async {
@@ -76,17 +113,47 @@ class _ModuloAdminState extends State<ModuloAdmin> {
       _modulos.insert(newIndex, item);
     });
 
-    await _salvarNovaOrdem();
-    await _carregarModulos();
+    _ignorarListener = true;
+
+    try {
+      await _salvarNovaOrdem();
+      await _carregarModulos();
+    } finally {
+      _ignorarListener = false;
+    }
   }
 
   void _excluirModulo(String idModulo) async {
-    await _firestore.collection('modulo').doc(idModulo).delete();
-    await _carregarModulos();
+    final listaAulas = await _firestore
+          .collection('aula')
+          .where('idModulo', isEqualTo: idModulo)
+          .get();
+
+    final batch = _firestore.batch();
+
+    batch.delete(
+      _firestore.collection('modulo').doc(idModulo),
+    );
+
+    for (var aula in listaAulas.docs) {
+      batch.delete(aula.reference);
+
+      final conteudos = await _firestore
+          .collection('conteudo')
+          .where('idAula', isEqualTo: aula['id'])
+          .get();
+
+      for (var conteudo in conteudos.docs) {
+        batch.delete(conteudo.reference);
+      }
+    }
+
+    await batch.commit();
+
   }
 
-  void _acessarAula(String idModulo, int quantidade) {
-    Navigator.push(
+  void _acessarAula(String idModulo, int quantidade) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AulaAdmin(
@@ -107,8 +174,9 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     String dificuldade = modulo?.data()['dificuldade']?.toString() ?? 'Fácil';
 
     final telaContext = context;
+    bool criouModulo = false;
 
-    await showDialog<void>(
+    final salvou = await showDialog<bool>(
       context: telaContext,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -158,14 +226,13 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                     if (titulo.isEmpty) return;
 
                     if (editando) {
-                      await _firestore
-                          .collection('modulo')
-                          .doc(modulo.id)
-                          .update({
+                      await _firestore.collection('modulo').doc(modulo.id).update({
                         'titulo': titulo,
                         'dificuldade': dificuldade,
                       });
                     } else {
+                      _ignorarListener = true;
+                      criouModulo = true;
                       final novoDoc = _firestore.collection('modulo').doc();
 
                       await novoDoc.set({
@@ -178,7 +245,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                     }
 
                     if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop();
+                    Navigator.of(dialogContext).pop(true);
                   },
                   child: const Text('Salvar'),
                 ),
@@ -190,10 +257,21 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     );
 
     if (!mounted) return;
-    await _carregarModulos();
+
+    if (salvou == true) {
+      try {
+        await _carregarModulos();
+      } finally {
+        if (criouModulo) {
+          _ignorarListener = false;
+        }
+      }
+    } else {
+      _ignorarListener = false;
+    }
 
     tituloController.dispose();
-}
+  }
 
   Widget _buildModuloCard(
     QueryDocumentSnapshot<Map<String, dynamic>> modulo,
@@ -202,7 +280,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     final data = modulo.data();
     final titulo = data['titulo']?.toString() ?? '';
     final dificuldade = data['dificuldade']?.toString() ?? '';
-    final quantidade =  data['quantidade'] ?? 0;
+    final quantidade = data['quantidade'] ?? 0;
 
     return Card(
       key: ValueKey(modulo.id),
@@ -214,6 +292,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 5,
           children: [
+            const SizedBox(height: 8),
             Text(
               titulo,
               style: const TextStyle(
@@ -222,15 +301,13 @@ class _ModuloAdminState extends State<ModuloAdmin> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('ID: ${modulo.id}'),
-            const SizedBox(height: 4),
             Text('Dificuldade: $dificuldade'),
             const SizedBox(height: 4),
             Text('Quantidade de aulas: $quantidade'),
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
-              children:[
+              children: [
                 IconButton(
                   onPressed: () => _abrirDialogoModulo(modulo: modulo),
                   icon: const Icon(Icons.edit),
@@ -253,8 +330,8 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                     child: Icon(Icons.drag_handle),
                   ),
                 ),
-              ]
-            )
+              ],
+            ),
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -28,10 +29,38 @@ class _AulaAdminState extends State<AulaAdmin> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _aulas = [];
   bool _isLoading = true;
 
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulaListener;
+
+  bool _ignorarListener = false;
+
   @override
   void initState() {
     super.initState();
-    _carregarAulas();
+    _iniciarListenerAula();
+  }
+
+  void _iniciarListenerAula() {
+    _aulaListener = _firestore
+        .collection('aula')
+        .orderBy('ordem')
+        .where('idModulo', isEqualTo: widget.idModulo)
+        .snapshots()
+        .listen(
+      (_) async {
+        if(_ignorarListener) return;
+        await _carregarAulas();
+      },
+      onError: (error) async {
+        if(_ignorarListener) return;
+        await _carregarAulas();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _aulaListener?.cancel();
+    super.dispose();
   }
 
   Future<void> _carregarAulas() async {
@@ -75,11 +104,15 @@ class _AulaAdminState extends State<AulaAdmin> {
   }
 
   Future<void> _salvarNovaOrdem() async {
+    final batch = _firestore.batch();
+
     for (int i = 0; i < _aulas.length; i++) {
-      await _firestore.collection('aula').doc(_aulas[i].id).update({
+      batch.update(_firestore.collection('aula').doc(_aulas[i].id), {
         'ordem': i,
       });
     }
+
+    await batch.commit();
   }
 
   Future<void> _reordenarAulas(int oldIndex, int newIndex) async {
@@ -92,8 +125,14 @@ class _AulaAdminState extends State<AulaAdmin> {
       _aulas.insert(newIndex, item);
     });
 
-    await _salvarNovaOrdem();
-    await _carregarAulas();
+    _ignorarListener = true;
+
+    try {
+      await _salvarNovaOrdem();
+      await _carregarAulas();
+    } finally {
+      _ignorarListener = false;
+    }
   }
 
   Future<void> _atualizarQuantidadeAulasModulo(int delta) async {
@@ -105,9 +144,23 @@ class _AulaAdminState extends State<AulaAdmin> {
   }
 
   void _excluirAula(String idAula) async {
-    await _firestore.collection('aula').doc(idAula).delete();
+    final listaConteudo = await _firestore
+    .collection('conteudo')
+    .where('idAula', isEqualTo: idAula)
+    .get();
+
+    final batch = _firestore.batch();
+
+    batch.delete(
+      _firestore.collection('aula').doc(idAula),
+    );
+
+    for (var conteudo in listaConteudo.docs) {
+      batch.delete(conteudo.reference);
+    }
+
+    await batch.commit();
     await _atualizarQuantidadeAulasModulo(-1);
-    await _carregarAulas();
   }
 
   void _acessarConteudo(String idAula) {
@@ -185,9 +238,10 @@ class _AulaAdminState extends State<AulaAdmin> {
     final bool editando = aula != null;
     String imagemBase64 = aula?.data()['url']?.toString() ?? '';
     String? erroFormulario;
+    bool atualizaQuantidadeModulo = false;
 
     final telaContext = context;
-    await showDialog<void>(
+    final salvou = await showDialog<bool>(
       context: telaContext,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -200,6 +254,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const SizedBox(height: 16),
                       TextField(
                         controller: tituloController,
                         decoration: const InputDecoration(
@@ -211,19 +266,28 @@ class _AulaAdminState extends State<AulaAdmin> {
                       TextField(
                         controller: tempoEstimadoController,
                         decoration: const InputDecoration(
-                          labelText: 'Tempo estimado',
+                          labelText: 'Tempo estimado (em minutos)',
                           border: OutlineInputBorder(),
+                          suffixIcon: Tooltip(
+                            message: 'Informe o tempo esperado para o aluno concluir a aula em minutos.',
+                            child: const Icon(Icons.info_outline),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 16),         
                       TextField(
-                        controller: totalXPController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Total XP',
-                          border: OutlineInputBorder(),
-                        ),
+                          controller: totalXPController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Total XP',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Tooltip(
+                              message: 'Informe a quantidade de pontos que o aluno receberá ao finalizar a aula.\nExemplo: 10, o aluno recebe 10 pontos se não errar nenhum exercício.',
+                              child: const Icon(Icons.info_outline),
+                            ),
+                          ),
                       ),
+                   
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -308,6 +372,9 @@ class _AulaAdminState extends State<AulaAdmin> {
                         'url': url,
                       });
                     } else {
+                      _ignorarListener = true;
+                      atualizaQuantidadeModulo = true;
+
                       final novoDoc = _firestore.collection('aula').doc();
 
                       await novoDoc.set({
@@ -319,12 +386,11 @@ class _AulaAdminState extends State<AulaAdmin> {
                         'url': url,
                         'ordem': _aulas.length,
                       });
-
-                      await _atualizarQuantidadeAulasModulo(1);
                     }
 
                     if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop();
+                    Navigator.of(dialogContext).pop(true);
+                    
                   },
                   child: const Text('Salvar'),
                 ),
@@ -336,8 +402,21 @@ class _AulaAdminState extends State<AulaAdmin> {
     );
 
     if (!mounted) return;
-    await _carregarAulas();
 
+    if (salvou == true) {
+      try {
+        if (atualizaQuantidadeModulo) {
+          await _atualizarQuantidadeAulasModulo(1);
+        }
+
+        await _carregarAulas();
+      } finally {
+        _ignorarListener = false;
+      }
+    } else {
+      _ignorarListener = false;
+    }
+    
     tituloController.dispose();
     totalXPController.dispose();
     tempoEstimadoController.dispose();
@@ -364,28 +443,24 @@ class _AulaAdminState extends State<AulaAdmin> {
           children: [
             Column(
               spacing: 5,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FractionallySizedBox(
                   widthFactor: 1.0,
                   child: _buildImagemPreview(url),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('ID: ${aula.id}'),
-                    const SizedBox(height: 4),
-                    Text('Tempo estimado: $tempoEstimado minutos'),
-                    const SizedBox(height: 4),
-                  ],
+                
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                Text('Tempo estimado: $tempoEstimado minutos'),
+                const SizedBox(height: 4),
+                
               ],
             ),
             Row(
