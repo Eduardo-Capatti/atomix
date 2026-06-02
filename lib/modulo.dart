@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,8 @@ class ModulesScreen extends StatefulWidget {
 
 class _ModulesScreenState extends State<ModulesScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _modulosListener;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
 
   int _selectedIndex = 0;
   bool _isLoading = true;
@@ -30,9 +33,32 @@ class _ModulesScreenState extends State<ModulesScreen> {
         if(!await verificarSession() || await verificarAdmin()){
           navegacaoSession(context, "/");  
         }
-        _carregarModulos();
+        _iniciarListeners();
     });
   }
+
+  void _iniciarListeners() async{
+    final idUsuario = await getIdUsuario();
+    _modulosListener = _firestore
+        .collection('modulo')
+        .snapshots()
+        .listen((_) => _carregarModulos());
+
+    _aulasListener = _firestore
+          .collection('usuarioAula')
+          .where('idUsuario', isEqualTo: idUsuario)
+          .snapshots()
+          .listen((_) => _carregarModulos());
+  }
+
+  @override
+  void dispose() {
+    _modulosListener?.cancel();
+    _aulasListener?.cancel();
+    super.dispose();
+  }
+
+
 
   Future<void> _carregarModulos() async {
     setState(() {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +25,7 @@ class LessonsScreen extends StatefulWidget {
 
 class _LessonsScreenState extends State<LessonsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
 
   int _selectedIndex = 0;
   bool _isLoading = true;
@@ -32,7 +34,29 @@ class _LessonsScreenState extends State<LessonsScreen> {
   @override
   void initState() {
     super.initState();
-    _carregarAulas();
+    _iniciarListenerAulas();
+  }
+
+  void _iniciarListenerAulas() {
+    _aulasListener = _firestore
+        .collection('aula')
+        .orderBy('ordem')
+        .where("idModulo", isEqualTo: widget.idModulo)
+        .snapshots()
+        .listen(
+      (_) async {
+        await _carregarAulas();
+      },
+      onError: (error) async {
+        await _carregarAulas();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _aulasListener?.cancel();
+    super.dispose();
   }
 
   Future<void> _carregarAulas() async {

@@ -20,7 +20,7 @@ class ConteudoAdmin extends StatefulWidget {
 
 class _ConteudoAdminState extends State<ConteudoAdmin> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  bool hasExercise = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginas = [];
   bool _isLoading = true;
   int _paginaAtualIndex = 0;
@@ -379,6 +379,10 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
             .map((item) => TextEditingController(text: item))
             .toList();
 
+    final dicaController = TextEditingController(
+      text: conteudo?['dica']?.toString() ?? '',
+    );
+
     final respostasImagem = respostasIniciais.isEmpty
         ? <String>['', '']
         : List<String>.from(respostasIniciais);
@@ -421,19 +425,25 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: tipo,
                         decoration: const InputDecoration(
                           labelText: 'Tipo',
                           border: OutlineInputBorder(),
+                          suffixIcon: Tooltip(
+                            message: 'Recomenda-se que os exercícios sejam cadastrados ao fim da página, apenas um exercício por página é permitido.',
+                            child: const Icon(Icons.info_outline),
+                          ),
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(value: 'texto', child: Text('Texto')),
                           DropdownMenuItem(value: 'imagem', child: Text('Imagem')),
                           DropdownMenuItem(value: 'video', child: Text('Vídeo')),
                           DropdownMenuItem(
+                            enabled: (!hasExercise || editando),
                             value: 'exercicio',
-                            child: Text('Exercício'),
+                            child: Text('Exercício', style: TextStyle(color: (hasExercise && !editando) ? Colors.grey : Colors.black)),
                           ),
                         ],
                         onChanged: (value) {
@@ -468,7 +478,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                       if (tipo == 'texto')
                         TextField(
                           controller: conteudoController,
-                          maxLines: 5,
+                          maxLines: 3,
                           decoration: const InputDecoration(
                             labelText: 'Conteúdo',
                             border: OutlineInputBorder(),
@@ -627,7 +637,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                         tooltip: 'Remover resposta',
                                       ),
                                   ],
-                                ),
+                                ),   
 
                                 if (tipo2 == 'texto')
                                   TextField(
@@ -658,10 +668,23 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                         'A imagem informada é inválida.',
                                   ),
                                 ],
+
                               ],
                             ),
                           ),
                         ],
+                         TextField(
+                            controller: dicaController,
+                            maxLines: 2,
+                            decoration: const InputDecoration(
+                              labelText: 'Dica',
+                              border: OutlineInputBorder(),
+                              suffixIcon: Tooltip(
+                                message: 'Uma dica/pista para ajudar o aluno caso ele erre a questão.',
+                                child: const Icon(Icons.info_outline),
+                              ),
+                            ),
+                          ),
                       ],
 
                       if (erroFormulario != null) ...[
@@ -677,7 +700,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
@@ -733,6 +756,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                     if (tipo == 'exercicio') {
                       final pergunta = perguntaController.text.trim();
                       final respostas = <String>[];
+                      final dica = dicaController.text.trim();
 
                       for (int i = 0; i < respostaControllers.length; i++) {
                         final valor = respostaControllers[i].text.trim();
@@ -746,6 +770,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         });
                         return;
                       }
+
 
                       if (respostas.length < 2) {
                         setDialogState(() {
@@ -782,6 +807,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         'pergunta': pergunta,
                         'conteudo': respostas,
                         'resposta': respostaCorreta,
+                        'dica': dica
                       };
                     }
 
@@ -1001,6 +1027,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   Widget _buildResumoExercicio(Map<String, dynamic> conteudo) {
+    setState(()=>{hasExercise = true});
+    print(hasExercise);
     final pergunta = conteudo['pergunta']?.toString() ?? '';
     final tipo2 = conteudo['tipo2']?.toString() ?? 'texto';
     final respostas = List<String>.from(conteudo['conteudo'] as List? ?? []);
@@ -1045,8 +1073,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
             const SizedBox(height: 12),
             if (tipo == 'texto') Text(valor?.toString() ?? ''),
             if (tipo == 'video') Text(valor?.toString() ?? ''),
-            if (tipo == 'imagem')
-              _buildImagemConteudoCard(valor?.toString() ?? ''),
+            if (tipo == 'imagem') _buildImagemConteudoCard(valor?.toString() ?? ''),
             if (tipo == 'exercicio') _buildResumoExercicio(conteudo),
             const SizedBox(width: 12),
             Row(

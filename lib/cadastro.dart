@@ -216,6 +216,26 @@ class _CadastroPageState extends State<CadastroPage> {
                   onPressed: () => onRegister(context),
                   child: const Text("Criar conta"),
                 ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children:[
+
+                      Text(
+                        "Já tem uma conta?",
+                        style: TextStyle(color: Colors.blue[900]),
+                      ),
+                     
+                      TextButton(
+                        // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
+                        onPressed: () => Navigator.pushReplacementNamed(context, "/"),
+                        child: Text(
+                          "Entrar",
+                          style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900)),  
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

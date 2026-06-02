@@ -159,7 +159,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 TextButton(
                   // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                  onPressed: () => Navigator.pushNamed(context, "/cadastro"),
+                  onPressed: () => Navigator.pushReplacementNamed(context, "/cadastro"),
                   child: Text(
                     "Cadastrar-se",
                     style: TextStyle(color: Colors.blue[900]),
@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 TextButton(
                   // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                  onPressed: () => Navigator.pushNamed(context, "/loginAdmin"),
+                  onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
                   child: Text(
                     "Entrar como professor",
                     style: TextStyle(color: Colors.blue[900]),

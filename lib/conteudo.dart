@@ -29,6 +29,8 @@ class Conteudo extends StatefulWidget {
 class ConteudoState extends State<Conteudo> {
   final player = AudioPlayer();
 
+  String dica = '';
+
   void tocarAudio(bool acerto) async {
     if(acerto){
       await player.play(AssetSource('sounds/acerto.wav'));
@@ -208,6 +210,7 @@ class ConteudoState extends State<Conteudo> {
             content['conteudo'] as List? ?? const <String>[],
           );
 
+          setState(()=> dica = content['dica'] ?? '');
           conteudo.add(
             _buildExerciseTitle(content['pergunta']?.toString() ?? ''),
           );
@@ -350,7 +353,7 @@ class ConteudoState extends State<Conteudo> {
     if (videoId == null) {
       return _buildSectionCard(
         borderColor: const Color(0xFFF0D3D3),
-        child: const Text('Nao foi possivel carregar este video do YouTube.'),
+        child: const Text('Não foi possível carregar este vídeo do YouTube.'),
       );
     }
 
@@ -374,7 +377,7 @@ class ConteudoState extends State<Conteudo> {
               Icon(Icons.smart_display_rounded, color: Color(0xFFD97706)),
               SizedBox(width: 8),
               Text(
-                'Video complementar',
+                'Vídeo complementar',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -385,7 +388,7 @@ class ConteudoState extends State<Conteudo> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Assista ao video para reforcar o conteudo da aula.',
+            'Assista ao vídeo para reforçar o conteúdo da aula.',
             style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 14),
@@ -415,7 +418,7 @@ class ConteudoState extends State<Conteudo> {
               Icon(Icons.quiz_outlined, color: Color(0xFF6B46C1)),
               SizedBox(width: 8),
               Text(
-                'Exercicio',
+                'Exercício',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -570,113 +573,96 @@ class ConteudoState extends State<Conteudo> {
   void responderExercicio(bool resposta) {
     tocarAudio(resposta);
     setState(() {
-      if (resposta) {
-        resultado = Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2F855A),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Text(
-                  'Muito bem! Voce acertou a questao!',
+      resultado = Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: resposta ? Color(0xFF2F855A) : Color(0xFFC53030),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  resposta ? 'Muito bem! Você acertou a questão!' : "Não era bem isso...",
                   style: TextStyle(
                     color: Color.fromRGBO(255, 255, 255, 1),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return SizedBox(
-                    width: constraints.maxWidth,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2F855A),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed:
-                          paginaAtual == paginaTotal ? concluirAula : avancarPagina,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text('Proximo'),
+                dica != '' && !resposta?
+                  Tooltip(
+                    message: dica,
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: Colors.white,
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      } else {
-        resultado = Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFC53030),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Text(
-                  'Nao era bem isso...',
-                  style: TextStyle(
-                    color: Color.fromRGBO(255, 255, 255, 1),
-                    fontWeight: FontWeight.w600,
+                  ) : SizedBox(),
+              ]
+            ),
+            const SizedBox(width: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return resposta ? SizedBox(
+                  width: constraints.maxWidth,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2F855A),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed:
+                        paginaAtual == paginaTotal ? concluirAula : avancarPagina,
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Próximo'),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      SizedBox(
-                        width: constraints.maxWidth,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC53030),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: reiniciarAula,
-                          icon: const Icon(Icons.restart_alt_outlined),
-                          label: const Text('Reiniciar aula'),
+                ) : Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(
+                      width: constraints.maxWidth,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC53030),
+                          foregroundColor: Colors.white,
                         ),
+                        onPressed: reiniciarAula,
+                        icon: const Icon(Icons.restart_alt_outlined),
+                        label: const Text('Reiniciar aula'),
                       ),
-                      SizedBox(
-                        width: constraints.maxWidth,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC53030),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () => setState(() => resultado = null),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Tentar novamente'),
+                    ),
+                    SizedBox(
+                      width: constraints.maxWidth,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC53030),
+                          foregroundColor: Colors.white,
                         ),
+                        onPressed: () => setState(() => resultado = null),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Tentar novamente'),
                       ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        );
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      );
 
+      if(!resposta){
         if (countRespostaErrada < maxRespostaErrada) {
           totalXP -= totalPerdeXP;
           countRespostaErrada++;
         }
       }
+      
     });
   }
 
@@ -781,7 +767,7 @@ class ConteudoState extends State<Conteudo> {
                     : paginas.isEmpty
                         ? const Center(
                             child: Text(
-                              'Nenhum conteudo cadastrado para esta aula.',
+                              'Nenhum conteúdo cadastrado para esta aula.',
                             ),
                           )
                         : SingleChildScrollView(
