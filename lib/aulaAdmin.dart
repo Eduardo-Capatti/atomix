@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'base64.dart';
 import 'basecard.dart';
@@ -322,6 +323,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: tituloController,
+                        maxLength: 50,
                         decoration: const InputDecoration(
                           labelText: 'Titulo',
                           border: OutlineInputBorder(),
@@ -330,11 +332,31 @@ class _AulaAdminState extends State<AulaAdmin> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: tempoEstimadoController,
+                        maxLength: 2,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          TextInputFormatter.withFunction(
+                              (oldValue, newValue) {
+                                if (newValue.text.isEmpty) {
+                                  return newValue;
+                                }
+
+                                final valor = int.tryParse(newValue.text);
+
+                                if (valor != null && valor <= 40) {
+                                  return newValue;
+                                }
+
+                                return oldValue;
+                              },
+                            )
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'Tempo estimado (em minutos)',
                           border: OutlineInputBorder(),
                           suffixIcon: Tooltip(
-                            message: 'Informe o tempo esperado para o aluno concluir a aula em minutos.',
+                            message: 'Informe o tempo esperado para o aluno concluir a aula em minutos.\nValor Máximo: 40 minutos',
                             child: const Icon(Icons.info_outline),
                           ),
                         ),
@@ -342,12 +364,31 @@ class _AulaAdminState extends State<AulaAdmin> {
                       const SizedBox(height: 16),         
                       TextField(
                           controller: totalXPController,
+                          maxLength: 3,
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            TextInputFormatter.withFunction(
+                              (oldValue, newValue) {
+                                if (newValue.text.isEmpty) {
+                                  return newValue;
+                                }
+
+                                final valor = int.tryParse(newValue.text);
+
+                                if (valor != null && valor <= 100) {
+                                  return newValue;
+                                }
+
+                                return oldValue;
+                              },
+                            )
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Total XP',
                             border: OutlineInputBorder(),
                             suffixIcon: Tooltip(
-                              message: 'Informe a quantidade de pontos que o aluno receberá ao finalizar a aula.\nExemplo: 10, o aluno recebe 10 pontos se não errar nenhum exercício.',
+                              message: 'Informe a quantidade de pontos que o aluno receberá ao finalizar a aula.\nExemplo: 10, o aluno recebe 10 pontos se não errar nenhum exercício.\nValor Máximo: 100 pontos',
                               child: const Icon(Icons.info_outline),
                             ),
                           ),

@@ -244,6 +244,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                 children: [
                   TextField(
                     controller: tituloController,
+                    maxLength: 50,
                     decoration: const InputDecoration(
                       labelText: 'Título',
                       border: OutlineInputBorder(),

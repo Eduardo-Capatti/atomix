@@ -565,6 +565,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         TextField(
                           controller: conteudoController,
                           maxLines: 3,
+                          maxLength: 250,
                           decoration: const InputDecoration(
                             labelText: 'Conteúdo',
                             border: OutlineInputBorder(),
@@ -635,6 +636,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         TextField(
                           controller: perguntaController,
                           maxLines: 3,
+                          maxLength: 100,
                           decoration: const InputDecoration(
                             labelText: 'Pergunta',
                             border: OutlineInputBorder(),
@@ -728,6 +730,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                 if (tipo2 == 'texto')
                                   TextField(
                                     controller: respostaControllers[i],
+                                    maxLength: 100,
                                     decoration: const InputDecoration(
                                       labelText: 'Texto da resposta',
                                       border: OutlineInputBorder(),
@@ -762,6 +765,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                          TextField(
                             controller: dicaController,
                             maxLines: 2,
+                            maxLength: 100,
                             decoration: const InputDecoration(
                               labelText: 'Dica',
                               border: OutlineInputBorder(),
@@ -916,7 +920,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                     } on FirebaseException catch (ex) {
                       setDialogState(() {
                         erroFormulario = _excedeuLimiteDocumento(ex)
-                            ? 'A imagem e muito grande para salvar. Use uma imagem mais leve.'
+                            ? 'A imagem é muito grande para salvar. Use uma imagem mais leve.'
                             : editando
                                 ? 'Falha ao atualizar o conteudo.'
                                 : 'Falha ao salvar o conteudo.';
@@ -1138,7 +1142,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   Widget _buildResumoExercicio(Map<String, dynamic> conteudo) {
-    setState(()=>{hasExercise = true});
+    setState(()=>hasExercise = true);
     print(hasExercise);
     final pergunta = conteudo['pergunta']?.toString() ?? '';
     final tipo2 = conteudo['tipo2']?.toString() ?? 'texto';
