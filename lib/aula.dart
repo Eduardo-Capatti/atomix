@@ -26,15 +26,18 @@ class LessonsScreen extends StatefulWidget {
 class _LessonsScreenState extends State<LessonsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _usuarioAulasListener;
 
   int _selectedIndex = 0;
   bool _isLoading = true;
   List<LessonModel> _aulas = [];
+  Set<String> _aulasConcluidas = {};
 
   @override
   void initState() {
     super.initState();
     _iniciarListenerAulas();
+    _iniciarListenerUsuarioAulas();
   }
 
   void _iniciarListenerAulas() {
@@ -53,9 +56,29 @@ class _LessonsScreenState extends State<LessonsScreen> {
     );
   }
 
+  void _iniciarListenerUsuarioAulas() async {
+    final idUsuario = await getIdUsuario();
+    if (!mounted) return;
+
+    _usuarioAulasListener = _firestore
+        .collection('usuarioAula')
+        .where('idModulo', isEqualTo: widget.idModulo)
+        .where('idUsuario', isEqualTo: idUsuario)
+        .snapshots()
+        .listen(
+      (_) async {
+        await _carregarAulasConcluidas(idUsuario);
+      },
+      onError: (error) async {
+        await _carregarAulasConcluidas(idUsuario);
+      },
+    );
+  }
+
   @override
   void dispose() {
     _aulasListener?.cancel();
+    _usuarioAulasListener?.cancel();
     super.dispose();
   }
 
@@ -95,6 +118,25 @@ class _LessonsScreenState extends State<LessonsScreen> {
     });
   }
 
+  Future<void> _carregarAulasConcluidas([String? idUsuarioAtual]) async {
+    final idUsuario = idUsuarioAtual ?? await getIdUsuario();
+
+    final snapshot = await _firestore
+        .collection('usuarioAula')
+        .where('idModulo', isEqualTo: widget.idModulo)
+        .where('idUsuario', isEqualTo: idUsuario)
+        .get();
+
+    if (!mounted) return;
+
+    setState(() {
+      _aulasConcluidas = snapshot.docs
+          .map((doc) => doc.data()['idAula']?.toString() ?? '')
+          .where((idAula) => idAula.isNotEmpty)
+          .toSet();
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -127,6 +169,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                     for (final lesson in _aulas)
                       LessonCard(
                         lesson: lesson,
+                        isCompleted: _aulasConcluidas.contains(lesson.id),
                         onTap: () {
                           Navigator.push(
                             context,

@@ -6,8 +6,14 @@ import 'models.dart';
 class CustomAppCard extends StatelessWidget {
   final Widget child;
   final Color? backgroundColor;
+  final BoxDecoration? decoration;
 
-  const CustomAppCard({super.key, required this.child, this.backgroundColor});
+  const CustomAppCard({
+    super.key,
+    required this.child,
+    this.backgroundColor,
+    this.decoration,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,17 +21,18 @@ class CustomAppCard extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      decoration: decoration ??
+          BoxDecoration(
+            color: backgroundColor ?? Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
       child: child,
     );
   }
@@ -97,12 +104,39 @@ class ModuleCard extends StatelessWidget {
 class LessonCard extends StatelessWidget {
   final LessonModel lesson;
   final VoidCallback? onTap;
+  final bool isCompleted;
 
   const LessonCard({
     super.key,
     required this.lesson,
     this.onTap,
+    this.isCompleted = false,
   });
+
+  BoxDecoration _buildCompletedDecoration() {
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          const Color(0xFF4CAF50),
+          const Color(0xFF2E7D32),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: const Color(0xFF2E9E44),
+        width: 1.2,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF2E9E44).withOpacity(0.18),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
 
   Widget _buildFallbackImage() {
     return Container(
@@ -137,10 +171,14 @@ class LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final infoColor = isCompleted ? Colors.white.withOpacity(0.92) : Colors.grey;
+    final actionColor = isCompleted ? Colors.white : Colors.blue;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: CustomAppCard(
+        decoration: isCompleted ? _buildCompletedDecoration() : null,
         child: Row(
           children: [
             ClipRRect(
@@ -154,30 +192,31 @@ class LessonCard extends StatelessWidget {
                 children: [
                   Text(
                     lesson.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      color: isCompleted ? Colors.white : null,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.timer_outlined,
                         size: 14,
-                        color: Colors.grey,
+                        color: infoColor,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         "${lesson.estimatedTime} minutos",
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: infoColor),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.play_circle_outline, color: Colors.blue),
+            Icon(Icons.play_circle_outline, color: actionColor),
           ],
         ),
       ),

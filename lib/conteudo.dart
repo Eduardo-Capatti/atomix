@@ -1,4 +1,5 @@
 import 'package:atomix/parabenizar.dart';
+import 'package:atomix/session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -51,6 +52,8 @@ class ConteudoState extends State<Conteudo> {
   Widget? resultado;
   int? respostaSelecionada;
   String tituloAula = '';
+
+ 
   late int totalXP = widget.totalXP;
   int totalPerdeXP = 4;
   int countRespostaErrada = 0;
@@ -83,6 +86,21 @@ class ConteudoState extends State<Conteudo> {
     _scrollController.dispose();
     stopwatch.stop();
     super.dispose();
+  }
+
+
+  Future<bool> _verificarAulaConcluida() async{
+    final idUsuario = await getIdUsuario();
+
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+
+    snapshot = await _firestore
+      .collection('usuarioAula')
+      .where('idAula', isEqualTo: widget.idAula)
+      .where('idUsuario', isEqualTo: idUsuario)
+      .get();
+    
+    return snapshot.docs.isNotEmpty;
   }
 
   Future<void> _carregarConteudos() async {
@@ -131,7 +149,8 @@ class ConteudoState extends State<Conteudo> {
       return;
     }
 
-    final xp = totalXP;
+    
+    final xp =  (await _verificarAulaConcluida() ? totalXP * 0.2 : totalXP) as int;  
 
     setState(() {
       paginas = paginasOrdenadas;
