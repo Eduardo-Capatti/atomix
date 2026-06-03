@@ -16,12 +16,39 @@ class ModuloAdmin extends StatefulWidget {
 
 class _ModuloAdminState extends State<ModuloAdmin> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Timer? _erroFormularioTimer;
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _modulos = [];
   bool _isLoading = true;
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _modulosListener;
   bool _ignorarListener = false;
+
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  void _agendarLimpezaErroFormulario(
+    BuildContext dialogContext,
+    StateSetter setDialogState,
+    void Function() limparErro,
+  ) {
+    _erroFormularioTimer?.cancel();
+    _erroFormularioTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || !dialogContext.mounted) return;
+
+      setDialogState(limparErro);
+    });
+  }
 
   @override
   void initState() {
@@ -56,6 +83,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
 
   @override
   void dispose() {
+    _erroFormularioTimer?.cancel();
     _modulosListener?.cancel();
     super.dispose();
   }
@@ -67,28 +95,44 @@ class _ModuloAdminState extends State<ModuloAdmin> {
       _isLoading = true;
     });
 
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
     try {
-      snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
-    } catch (_) {
-      snapshot = await _firestore.collection('modulo').get();
+      QuerySnapshot<Map<String, dynamic>> snapshot;
 
-      for (int i = 0; i < snapshot.docs.length; i++) {
-        await _firestore.collection('modulo').doc(snapshot.docs[i].id).set({
-          'ordem': i,
-        }, SetOptions(merge: true));
+      try {
+        snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
+      } catch (_) {
+        snapshot = await _firestore.collection('modulo').get();
+
+        for (int i = 0; i < snapshot.docs.length; i++) {
+          await _firestore.collection('modulo').doc(snapshot.docs[i].id).set({
+            'ordem': i,
+          }, SetOptions(merge: true));
+        }
+
+        snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
       }
 
-      snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
+      if (!mounted) return;
+
+      setState(() {
+        _modulos = snapshot.docs;
+        _isLoading = false;
+      });
+    } on FirebaseException {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Falha ao carregar módulos.');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Não foi possível carregar os módulos.');
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      _modulos = snapshot.docs;
-      _isLoading = false;
-    });
   }
 
   Future<void> _salvarNovaOrdem() async {
@@ -118,38 +162,49 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     try {
       await _salvarNovaOrdem();
       await _carregarModulos();
+    } on FirebaseException {
+      await _carregarModulos();
+      _mostrarErro('Falha ao atualizar a ordem dos módulos.');
+    } catch (_) {
+      await _carregarModulos();
+      _mostrarErro('Não foi possível reordenar os módulos.');
     } finally {
       _ignorarListener = false;
     }
   }
 
   void _excluirModulo(String idModulo) async {
-    final listaAulas = await _firestore
+    try {
+      final listaAulas = await _firestore
           .collection('aula')
           .where('idModulo', isEqualTo: idModulo)
           .get();
 
-    final batch = _firestore.batch();
+      final batch = _firestore.batch();
 
-    batch.delete(
-      _firestore.collection('modulo').doc(idModulo),
-    );
+      batch.delete(
+        _firestore.collection('modulo').doc(idModulo),
+      );
 
-    for (var aula in listaAulas.docs) {
-      batch.delete(aula.reference);
+      for (var aula in listaAulas.docs) {
+        batch.delete(aula.reference);
 
-      final conteudos = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: aula['id'])
-          .get();
+        final conteudos = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: aula['id'])
+            .get();
 
-      for (var conteudo in conteudos.docs) {
-        batch.delete(conteudo.reference);
+        for (var conteudo in conteudos.docs) {
+          batch.delete(conteudo.reference);
+        }
       }
+
+      await batch.commit();
+    } on FirebaseException {
+      _mostrarErro('Falha ao excluir o módulo.');
+    } catch (_) {
+      _mostrarErro('Não foi possível excluir o módulo.');
     }
-
-    await batch.commit();
-
   }
 
   void _acessarAula(String idModulo, int quantidade) async {
@@ -172,6 +227,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     );
     final bool editando = modulo != null;
     String dificuldade = modulo?.data()['dificuldade']?.toString() ?? 'Fácil';
+    String? erroFormulario;
 
     final telaContext = context;
     bool criouModulo = false;
@@ -209,9 +265,17 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                       if (value == null) return;
                       setDialogState(() {
                         dificuldade = value;
+                        erroFormulario = null;
                       });
                     },
                   ),
+                  if (erroFormulario != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      erroFormulario!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
                 ],
               ),
               actions: [
@@ -221,31 +285,56 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final titulo = tituloController.text.trim();
+                    try {
+                      final titulo = tituloController.text.trim();
 
-                    if (titulo.isEmpty) return;
+                      if (titulo.isEmpty) {
+                        throw Exception('Preencha o título antes de salvar.');
+                      }
 
-                    if (editando) {
-                      await _firestore.collection('modulo').doc(modulo.id).update({
-                        'titulo': titulo,
-                        'dificuldade': dificuldade,
+                      if (editando) {
+                        await _firestore.collection('modulo').doc(modulo.id).update({
+                          'titulo': titulo,
+                          'dificuldade': dificuldade,
+                        });
+                      } else {
+                        _ignorarListener = true;
+                        criouModulo = true;
+                        final novoDoc = _firestore.collection('modulo').doc();
+
+                        await novoDoc.set({
+                          'id': novoDoc.id,
+                          'titulo': titulo,
+                          'dificuldade': dificuldade,
+                          'quantidade': 0,
+                          'ordem': _modulos.length,
+                        });
+                      }
+
+                      if (!dialogContext.mounted) return;
+                      Navigator.of(dialogContext).pop(true);
+                    } on FirebaseException {
+                      setDialogState(() {
+                        erroFormulario = editando
+                            ? 'Falha ao atualizar o módulo.'
+                            : 'Falha ao salvar o módulo.';
                       });
-                    } else {
-                      _ignorarListener = true;
-                      criouModulo = true;
-                      final novoDoc = _firestore.collection('modulo').doc();
-
-                      await novoDoc.set({
-                        'id': novoDoc.id,
-                        'titulo': titulo,
-                        'dificuldade': dificuldade,
-                        'quantidade': 0,
-                        'ordem': _modulos.length,
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
+                    } catch (ex) {
+                      setDialogState(() {
+                        erroFormulario =
+                            ex.toString().replaceFirst('Exception: ', '');
                       });
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
                     }
-
-                    if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop(true);
                   },
                   child: const Text('Salvar'),
                 ),

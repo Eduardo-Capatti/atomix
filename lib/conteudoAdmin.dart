@@ -20,12 +20,47 @@ class ConteudoAdmin extends StatefulWidget {
 
 class _ConteudoAdminState extends State<ConteudoAdmin> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Timer? _erroFormularioTimer;
   bool hasExercise = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginas = [];
   bool _isLoading = true;
   int _paginaAtualIndex = 0;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _paginasListener;
   bool _ignorarListener = false;
+
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  bool _excedeuLimiteDocumento(FirebaseException exception) {
+    final mensagem = exception.message?.toLowerCase() ?? '';
+
+    return mensagem.contains('1048487 bytes') ||
+        mensagem.contains('maximum allowed size') ||
+        (mensagem.contains('document') && mensagem.contains('bytes'));
+  }
+
+  void _agendarLimpezaErroFormulario(
+    BuildContext dialogContext,
+    StateSetter setDialogState,
+    void Function() limparErro,
+  ) {
+    _erroFormularioTimer?.cancel();
+    _erroFormularioTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || !dialogContext.mounted) return;
+
+      setDialogState(limparErro);
+    });
+  }
 
   @override
   void initState() {
@@ -52,6 +87,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
   @override
   void dispose() {
+    _erroFormularioTimer?.cancel();
     _paginasListener?.cancel();
     super.dispose();
   }
@@ -94,64 +130,80 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       _isLoading = true;
     });
 
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
     try {
-      snapshot = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: widget.idAula)
-          .orderBy('pagina')
-          .get();
-    } catch (_) {
-      snapshot = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: widget.idAula)
-          .get();
-    }
+      QuerySnapshot<Map<String, dynamic>> snapshot;
 
-    var paginas = snapshot.docs.toList()
-      ..sort(
-        (a, b) => ((a.data()['pagina'] ?? 0) as num)
-            .compareTo((b.data()['pagina'] ?? 0) as num),
-      );
+      try {
+        snapshot = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: widget.idAula)
+            .orderBy('pagina')
+            .get();
+      } catch (_) {
+        snapshot = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: widget.idAula)
+            .get();
+      }
 
-    final alterou = await _normalizarPaginas(paginas);
-
-    if (alterou) {
-      final novoSnapshot = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: widget.idAula)
-          .orderBy('pagina')
-          .get();
-
-      paginas = novoSnapshot.docs.toList();
-    }
-
-    if (!mounted) return;
-
-    int novoIndice = 0;
-
-    if (paginas.isNotEmpty) {
-      if (paginaDesejada != null) {
-        novoIndice = paginas.indexWhere(
-          (doc) => (doc.data()['pagina'] ?? 0) == paginaDesejada,
+      var paginas = snapshot.docs.toList()
+        ..sort(
+          (a, b) => ((a.data()['pagina'] ?? 0) as num)
+              .compareTo((b.data()['pagina'] ?? 0) as num),
         );
-      } else if (_paginaAtualIndex < paginas.length) {
-        novoIndice = _paginaAtualIndex;
-      } else {
-        novoIndice = paginas.length - 1;
+
+      final alterou = await _normalizarPaginas(paginas);
+
+      if (alterou) {
+        final novoSnapshot = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: widget.idAula)
+            .orderBy('pagina')
+            .get();
+
+        paginas = novoSnapshot.docs.toList();
       }
 
-      if (novoIndice < 0) {
-        novoIndice = 0;
+      if (!mounted) return;
+
+      int novoIndice = 0;
+
+      if (paginas.isNotEmpty) {
+        if (paginaDesejada != null) {
+          novoIndice = paginas.indexWhere(
+            (doc) => (doc.data()['pagina'] ?? 0) == paginaDesejada,
+          );
+        } else if (_paginaAtualIndex < paginas.length) {
+          novoIndice = _paginaAtualIndex;
+        } else {
+          novoIndice = paginas.length - 1;
+        }
+
+        if (novoIndice < 0) {
+          novoIndice = 0;
+        }
       }
+
+      setState(() {
+        _paginas = paginas;
+        _paginaAtualIndex = novoIndice;
+        _isLoading = false;
+      });
+    } on FirebaseException {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Falha ao carregar conteúdos.');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Não foi possível carregar os conteúdos.');
     }
-
-    setState(() {
-      _paginas = paginas;
-      _paginaAtualIndex = novoIndice;
-      _isLoading = false;
-    });
   }
 
   Future<bool> _normalizarPaginas(
@@ -218,19 +270,25 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   Future<void> _adicionarPagina() async {
-    await _executarSemListener(() async {
-      final novoDoc = _firestore.collection('conteudo').doc();
-      final proximaPagina = _paginas.length + 1;
+    try {
+      await _executarSemListener(() async {
+        final novoDoc = _firestore.collection('conteudo').doc();
+        final proximaPagina = _paginas.length + 1;
 
-      await novoDoc.set({
-        'id': novoDoc.id,
-        'idAula': widget.idAula,
-        'pagina': proximaPagina,
-        'conteudos': <Map<String, dynamic>>[],
+        await novoDoc.set({
+          'id': novoDoc.id,
+          'idAula': widget.idAula,
+          'pagina': proximaPagina,
+          'conteudos': <Map<String, dynamic>>[],
+        });
+
+        await _carregarPaginas(paginaDesejada: proximaPagina);
       });
-
-      await _carregarPaginas(paginaDesejada: proximaPagina);
-    });
+    } on FirebaseException {
+      _mostrarErro('Falha ao adicionar página.');
+    } catch (_) {
+      _mostrarErro('Não foi possível adicionar a página.');
+    }
   }
 
   Future<void> _excluirPaginaAtual() async {
@@ -242,15 +300,21 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     final paginaAtual = (_paginaAtualData['pagina'] as num?)?.toInt() ?? 1;
 
-    await _executarSemListener(() async {
-      await _firestore.collection('conteudo').doc(pagina.id).delete();
+    try {
+      await _executarSemListener(() async {
+        await _firestore.collection('conteudo').doc(pagina.id).delete();
 
-      await _carregarPaginas(
-        paginaDesejada: _paginas.length <= 1
-            ? null
-            : (paginaAtual > 1 ? paginaAtual - 1 : 1),
-      );
-    });
+        await _carregarPaginas(
+          paginaDesejada: _paginas.length <= 1
+              ? null
+              : (paginaAtual > 1 ? paginaAtual - 1 : 1),
+        );
+      });
+    } on FirebaseException {
+      _mostrarErro('Falha ao excluir a página.');
+    } catch (_) {
+      _mostrarErro('Não foi possível excluir a página.');
+    }
   }
 
   Future<void> _moverPagina(int direcao) async {
@@ -269,20 +333,26 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     final numeroDestino =
         (paginaDestino.data()['pagina'] as num?)?.toInt() ?? (novoIndice + 1);
 
-    await _executarSemListener(() async {
-      final batch = _firestore.batch();
+    try {
+      await _executarSemListener(() async {
+        final batch = _firestore.batch();
 
-      batch.update(_firestore.collection('conteudo').doc(paginaAtual.id), {
-        'pagina': numeroDestino,
+        batch.update(_firestore.collection('conteudo').doc(paginaAtual.id), {
+          'pagina': numeroDestino,
+        });
+
+        batch.update(_firestore.collection('conteudo').doc(paginaDestino.id), {
+          'pagina': numeroAtual,
+        });
+
+        await batch.commit();
+        await _carregarPaginas(paginaDesejada: numeroDestino);
       });
-
-      batch.update(_firestore.collection('conteudo').doc(paginaDestino.id), {
-        'pagina': numeroAtual,
-      });
-
-      await batch.commit();
-      await _carregarPaginas(paginaDesejada: numeroDestino);
-    });
+    } on FirebaseException {
+      _mostrarErro('Falha ao mover a página.');
+    } catch (_) {
+      _mostrarErro('Não foi possível mover a página.');
+    }
   }
 
   void _irParaPagina(int index) {
@@ -305,19 +375,23 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       return;
     }
 
-    await _executarSemListener(() async {
-      await _firestore.collection('conteudo').doc(pagina.id).update({
-        'conteudos': _normalizarConteudos(conteudos),
-      });
+    try {
+      await _executarSemListener(() async {
+        await _firestore.collection('conteudo').doc(pagina.id).update({
+          'conteudos': _normalizarConteudos(conteudos),
+        });
 
-      if (recarregarPagina) {
-        await _carregarPaginas(
-          paginaDesejada:
-              (_paginaAtualData['pagina'] as num?)?.toInt() ??
-              (_paginaAtualIndex + 1),
-        );
-      }
-    });
+        if (recarregarPagina) {
+          await _carregarPaginas(
+            paginaDesejada:
+                (_paginaAtualData['pagina'] as num?)?.toInt() ??
+                (_paginaAtualIndex + 1),
+          );
+        }
+      });
+    } catch (_) {
+      rethrow;
+    }
   }
 
   Future<void> _excluirConteudo(int index) async {
@@ -327,8 +401,14 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       return;
     }
 
-    conteudos.removeAt(index);
-    await _salvarConteudosPaginaAtual(conteudos);
+    try {
+      conteudos.removeAt(index);
+      await _salvarConteudosPaginaAtual(conteudos);
+    } on FirebaseException {
+      _mostrarErro('Falha ao excluir o conteúdo.');
+    } catch (_) {
+      _mostrarErro('Não foi possível excluir o conteúdo.');
+    }
   }
 
   Future<void> _reordenarConteudos(int oldIndex, int newIndex) async {
@@ -338,10 +418,16 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       newIndex -= 1;
     }
 
-    final item = conteudos.removeAt(oldIndex);
-    conteudos.insert(newIndex, item);
+    try {
+      final item = conteudos.removeAt(oldIndex);
+      conteudos.insert(newIndex, item);
 
-    await _salvarConteudosPaginaAtual(conteudos);
+      await _salvarConteudosPaginaAtual(conteudos);
+    } on FirebaseException {
+      _mostrarErro('Falha ao reordenar os conteúdos.');
+    } catch (_) {
+      _mostrarErro('Não foi possível reordenar os conteúdos.');
+    }
   }
 
   Future<void> _abrirDialogoConteudo({
@@ -705,6 +791,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
+                    try {
                     final conteudos =
                         List<Map<String, dynamic>>.from(_conteudosPaginaAtual);
 
@@ -824,8 +911,32 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                       recarregarPagina: false,
                     );
 
-                    if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop(true);
+                      if (!dialogContext.mounted) return;
+                      Navigator.of(dialogContext).pop(true);
+                    } on FirebaseException catch (ex) {
+                      setDialogState(() {
+                        erroFormulario = _excedeuLimiteDocumento(ex)
+                            ? 'A imagem e muito grande para salvar. Use uma imagem mais leve.'
+                            : editando
+                                ? 'Falha ao atualizar o conteudo.'
+                                : 'Falha ao salvar o conteudo.';
+                      });
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
+                    } catch (ex) {
+                      setDialogState(() {
+                        erroFormulario =
+                            ex.toString().replaceFirst('Exception: ', '');
+                      });
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
+                    }
                   },
                   child: const Text('Salvar'),
                 ),

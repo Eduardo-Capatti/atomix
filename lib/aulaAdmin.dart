@@ -25,6 +25,7 @@ class _AulaAdminState extends State<AulaAdmin> {
   late int quantidade = widget.quantidade;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Timer? _erroFormularioTimer;
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _aulas = [];
   bool _isLoading = true;
@@ -32,6 +33,40 @@ class _AulaAdminState extends State<AulaAdmin> {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulaListener;
 
   bool _ignorarListener = false;
+
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  bool _excedeuLimiteDocumento(FirebaseException exception) {
+    final mensagem = exception.message?.toLowerCase() ?? '';
+
+    return mensagem.contains('1048487 bytes') ||
+        mensagem.contains('maximum allowed size') ||
+        (mensagem.contains('document') && mensagem.contains('bytes'));
+  }
+
+  void _agendarLimpezaErroFormulario(
+    BuildContext dialogContext,
+    StateSetter setDialogState,
+    void Function() limparErro,
+  ) {
+    _erroFormularioTimer?.cancel();
+    _erroFormularioTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || !dialogContext.mounted) return;
+
+      setDialogState(limparErro);
+    });
+  }
 
   @override
   void initState() {
@@ -59,6 +94,7 @@ class _AulaAdminState extends State<AulaAdmin> {
 
   @override
   void dispose() {
+    _erroFormularioTimer?.cancel();
     _aulaListener?.cancel();
     super.dispose();
   }
@@ -68,39 +104,55 @@ class _AulaAdminState extends State<AulaAdmin> {
       _isLoading = true;
     });
 
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
     try {
-      snapshot = await _firestore
-          .collection('aula')
-          .orderBy('ordem')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .get();
-    } catch (_) {
-      snapshot = await _firestore
-          .collection('aula')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .get();
+      QuerySnapshot<Map<String, dynamic>> snapshot;
 
-      for (int i = 0; i < snapshot.docs.length; i++) {
-        await _firestore.collection('aula').doc(snapshot.docs[i].id).set({
-          'ordem': i,
-        }, SetOptions(merge: true));
+      try {
+        snapshot = await _firestore
+            .collection('aula')
+            .orderBy('ordem')
+            .where('idModulo', isEqualTo: widget.idModulo)
+            .get();
+      } catch (_) {
+        snapshot = await _firestore
+            .collection('aula')
+            .where('idModulo', isEqualTo: widget.idModulo)
+            .get();
+
+        for (int i = 0; i < snapshot.docs.length; i++) {
+          await _firestore.collection('aula').doc(snapshot.docs[i].id).set({
+            'ordem': i,
+          }, SetOptions(merge: true));
+        }
+
+        snapshot = await _firestore
+            .collection('aula')
+            .where('idModulo', isEqualTo: widget.idModulo)
+            .orderBy('ordem')
+            .get();
       }
 
-      snapshot = await _firestore
-          .collection('aula')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .orderBy('ordem')
-          .get();
+      if (!mounted) return;
+
+      setState(() {
+        _aulas = snapshot.docs;
+        _isLoading = false;
+      });
+    } on FirebaseException {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Falha ao carregar aulas.');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Não foi possível carregar as aulas.');
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      _aulas = snapshot.docs;
-      _isLoading = false;
-    });
   }
 
   Future<void> _salvarNovaOrdem() async {
@@ -130,6 +182,12 @@ class _AulaAdminState extends State<AulaAdmin> {
     try {
       await _salvarNovaOrdem();
       await _carregarAulas();
+    } on FirebaseException {
+      await _carregarAulas();
+      _mostrarErro('Falha ao atualizar a ordem das aulas.');
+    } catch (_) {
+      await _carregarAulas();
+      _mostrarErro('Não foi possível reordenar as aulas.');
     } finally {
       _ignorarListener = false;
     }
@@ -144,23 +202,29 @@ class _AulaAdminState extends State<AulaAdmin> {
   }
 
   void _excluirAula(String idAula) async {
-    final listaConteudo = await _firestore
-    .collection('conteudo')
-    .where('idAula', isEqualTo: idAula)
-    .get();
+    try {
+      final listaConteudo = await _firestore
+      .collection('conteudo')
+      .where('idAula', isEqualTo: idAula)
+      .get();
 
-    final batch = _firestore.batch();
+      final batch = _firestore.batch();
 
-    batch.delete(
-      _firestore.collection('aula').doc(idAula),
-    );
+      batch.delete(
+        _firestore.collection('aula').doc(idAula),
+      );
 
-    for (var conteudo in listaConteudo.docs) {
-      batch.delete(conteudo.reference);
+      for (var conteudo in listaConteudo.docs) {
+        batch.delete(conteudo.reference);
+      }
+
+      await batch.commit();
+      await _atualizarQuantidadeAulasModulo(-1);
+    } on FirebaseException {
+      _mostrarErro('Falha ao excluir a aula.');
+    } catch (_) {
+      _mostrarErro('Não foi possível excluir a aula.');
     }
-
-    await batch.commit();
-    await _atualizarQuantidadeAulasModulo(-1);
   }
 
   void _acessarConteudo(String idAula) {
@@ -176,7 +240,7 @@ class _AulaAdminState extends State<AulaAdmin> {
     String valor, {
     double altura = 140,
     String emptyLabel = 'Nenhuma imagem cadastrada.',
-    String invalidLabel = 'Imagem invalida.',
+    String invalidLabel = 'Imagem inválida.',
   }) {
     final texto = valor.trim();
 
@@ -241,9 +305,10 @@ class _AulaAdminState extends State<AulaAdmin> {
     bool atualizaQuantidadeModulo = false;
 
     final telaContext = context;
-    final salvou = await showDialog<bool>(
-      context: telaContext,
-      builder: (dialogContext) {
+    try {
+      final salvou = await showDialog<bool>(
+        context: telaContext,
+        builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
@@ -295,7 +360,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                           onPressed: () async {
                             final imagem = await selecionarImagemBase64();
 
-                            if (imagem == null) {
+                            if (imagem == null || !dialogContext.mounted) {
                               return;
                             }
 
@@ -313,7 +378,7 @@ class _AulaAdminState extends State<AulaAdmin> {
                         imagemBase64,
                         altura: 180,
                         emptyLabel: 'Nenhuma imagem selecionada.',
-                        invalidLabel: 'A imagem informada e invalida.',
+                        invalidLabel: 'A imagem informada é invalida.',
                       ),
                       if (erroFormulario != null) ...[
                         const SizedBox(height: 12),
@@ -328,68 +393,85 @@ class _AulaAdminState extends State<AulaAdmin> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: () {
+                    _erroFormularioTimer?.cancel();
+                    Navigator.of(dialogContext).pop();
+                  },
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final titulo = tituloController.text.trim();
-                    
-                    if (titulo.isEmpty) return;
+                    try {
+                      final titulo = tituloController.text.trim();
+                      final tempoEstimado = tempoEstimadoController.text.trim();
+                      final url = imagemBase64.trim();
+                      final totalXPTexto = totalXPController.text.trim();
+                      final totalXP = int.tryParse(totalXPTexto);
 
-                    final tempoEstimado = tempoEstimadoController.text.trim();
-                    final url = imagemBase64.trim();
-                    final totalXPTexto = totalXPController.text.trim();
-                    final totalXP = int.tryParse(totalXPTexto);
+                      if (titulo.isEmpty) {
+                        throw Exception('Preencha o título antes de salvar.');
+                      }
 
-                    if (titulo.isEmpty) {
+                      if (totalXPTexto.isEmpty || totalXP == null || totalXP < 0) {
+                        throw Exception('Informe um Total XP numérico válido.');
+                      }
+
+                      if (url.isNotEmpty && converterBase64EmBytes(url) == null) {
+                        throw Exception('A imagem informada é invalida.');
+                      }
+
+                      if (editando) {
+                        await _firestore.collection('aula').doc(aula.id).update({
+                          'titulo': titulo,
+                          'tempoEstimado': tempoEstimado,
+                          'totalXP': totalXP,
+                          'url': url,
+                        });
+                      } else {
+                        _ignorarListener = true;
+                        atualizaQuantidadeModulo = true;
+
+                        final novoDoc = _firestore.collection('aula').doc();
+
+                        await novoDoc.set({
+                          'id': novoDoc.id,
+                          'idModulo': widget.idModulo,
+                          'titulo': titulo,
+                          'tempoEstimado': tempoEstimado,
+                          'totalXP': totalXP,
+                          'url': url,
+                          'ordem': _aulas.length,
+                        });
+                      }
+
+                      _erroFormularioTimer?.cancel();
+                      if (!dialogContext.mounted) return;
+                      Navigator.of(dialogContext).pop(true);
+                    } on FirebaseException catch (ex) {
+                      if (!dialogContext.mounted) return;
                       setDialogState(() {
-                        erroFormulario = 'Preencha o titulo antes de salvar.';
+                        erroFormulario = _excedeuLimiteDocumento(ex)
+                            ? 'A imagem é muito grande para salvar. Use uma imagem mais leve.'
+                            : editando
+                                ? 'Falha ao atualizar a aula.'
+                                : 'Falha ao salvar a aula.';
                       });
-                      return;
-                    }
-
-                    if (totalXPTexto.isEmpty || totalXP == null || totalXP < 0) {
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
+                    } catch (ex) {
+                      if (!dialogContext.mounted) return;
                       setDialogState(() {
-                        erroFormulario =
-                            'Informe um Total XP numerico valido.';
+                        erroFormulario = ex.toString().replaceFirst('Exception: ', '');
                       });
-                      return;
+                      _agendarLimpezaErroFormulario(
+                        dialogContext,
+                        setDialogState,
+                        () => erroFormulario = null,
+                      );
                     }
-
-                    if (url.isNotEmpty && converterBase64EmBytes(url) == null) {
-                      setDialogState(() {
-                        erroFormulario = 'A imagem informada e invalida.';
-                      });
-                      return;
-                    }
-
-                    if (editando) {
-                      await _firestore.collection('aula').doc(aula.id).update({
-                        'titulo': titulo,
-                        'tempoEstimado': tempoEstimado,
-                        'totalXP': totalXP,
-                        'url': url,
-                      });
-                    } else {
-                      _ignorarListener = true;
-                      atualizaQuantidadeModulo = true;
-
-                      final novoDoc = _firestore.collection('aula').doc();
-
-                      await novoDoc.set({
-                        'id': novoDoc.id,
-                        'idModulo': widget.idModulo,
-                        'titulo': titulo,
-                        'tempoEstimado': tempoEstimado,
-                        'totalXP': totalXP,
-                        'url': url,
-                        'ordem': _aulas.length,
-                      });
-                    }
-
-                    if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop(true);
                     
                   },
                   child: const Text('Salvar'),
@@ -398,28 +480,31 @@ class _AulaAdminState extends State<AulaAdmin> {
             );
           },
         );
-      },
-    );
+        },
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (salvou == true) {
-      try {
-        if (atualizaQuantidadeModulo) {
-          await _atualizarQuantidadeAulasModulo(1);
+      if (salvou == true) {
+        try {
+          if (atualizaQuantidadeModulo) {
+            await _atualizarQuantidadeAulasModulo(1);
+          }
+
+          await _carregarAulas();
+        } finally {
+          _ignorarListener = false;
         }
-
-        await _carregarAulas();
-      } finally {
+      } else {
         _ignorarListener = false;
       }
-    } else {
-      _ignorarListener = false;
+    } finally {
+      _erroFormularioTimer?.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      tituloController.dispose();
+      totalXPController.dispose();
+      tempoEstimadoController.dispose();
     }
-    
-    tituloController.dispose();
-    totalXPController.dispose();
-    tempoEstimadoController.dispose();
   }
 
   Widget _buildAulaCard(
