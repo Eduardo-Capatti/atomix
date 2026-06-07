@@ -316,6 +316,7 @@ class _AulaAdminState extends State<AulaAdmin> {
               title: Text(editando ? 'Editar aula' : 'Nova aula'),
               content: SizedBox(
                 width: 520,
+                height: 620,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

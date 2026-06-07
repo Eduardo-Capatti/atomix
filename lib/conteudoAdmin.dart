@@ -128,6 +128,8 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   Future<void> _carregarPaginas({int? paginaDesejada}) async {
     setState(() {
       _isLoading = true;
+      hasExercise = false;
+      print(hasExercise);
     });
 
     try {
@@ -506,6 +508,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
               title: Text(editando ? 'Editar conteúdo' : 'Novo conteúdo'),
               content: SizedBox(
                 width: 520,
+                height: 620,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -565,7 +568,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         TextField(
                           controller: conteudoController,
                           maxLines: 3,
-                          maxLength: 250,
+                          maxLength: 300,
                           decoration: const InputDecoration(
                             labelText: 'Conteúdo',
                             border: OutlineInputBorder(),
@@ -636,7 +639,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         TextField(
                           controller: perguntaController,
                           maxLines: 3,
-                          maxLength: 100,
+                          maxLength: 300,
                           decoration: const InputDecoration(
                             labelText: 'Pergunta',
                             border: OutlineInputBorder(),
@@ -730,7 +733,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                                 if (tipo2 == 'texto')
                                   TextField(
                                     controller: respostaControllers[i],
-                                    maxLength: 100,
+                                    maxLength: 300,
                                     decoration: const InputDecoration(
                                       labelText: 'Texto da resposta',
                                       border: OutlineInputBorder(),
@@ -765,7 +768,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                          TextField(
                             controller: dicaController,
                             maxLines: 2,
-                            maxLength: 100,
+                            maxLength: 300,
                             decoration: const InputDecoration(
                               labelText: 'Dica',
                               border: OutlineInputBorder(),
@@ -1314,7 +1317,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
           ? const Center(child: CircularProgressIndicator())
           : !_temPaginas
               ? const Center(
-                  child: Text('Nenhuma página cadastrada. Use o botão no topo para adicionar.'),
+                  child: Text('Nenhuma página cadastrada.\nUse o botão no topo para adicionar.', textAlign: TextAlign.center),
                 )
               : Padding(
                   padding: const EdgeInsets.all(25),

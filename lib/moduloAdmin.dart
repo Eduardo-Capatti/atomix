@@ -232,16 +232,21 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     final telaContext = context;
     bool criouModulo = false;
 
-    final salvou = await showDialog<bool>(
-      context: telaContext,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
+    try {
+      final salvou = await showDialog<bool>(
+        context: telaContext,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (dialogContext, setDialogState) {
+              return AlertDialog(
               title: Text(editando ? 'Editar módulo' : 'Novo módulo'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              content: SizedBox(
+                width: 520,
+                height: 230,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                   TextField(
                     controller: tituloController,
                     maxLength: 50,
@@ -277,11 +282,16 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                       style: const TextStyle(color: Colors.red),
                     ),
                   ],
-                ],
+                    ],
+                  ),
+                ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: () {
+                    _erroFormularioTimer?.cancel();
+                    Navigator.of(dialogContext).pop();
+                  },
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
@@ -312,9 +322,11 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                         });
                       }
 
+                      _erroFormularioTimer?.cancel();
                       if (!dialogContext.mounted) return;
                       Navigator.of(dialogContext).pop(true);
                     } on FirebaseException {
+                      if (!dialogContext.mounted) return;
                       setDialogState(() {
                         erroFormulario = editando
                             ? 'Falha ao atualizar o módulo.'
@@ -326,6 +338,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                         () => erroFormulario = null,
                       );
                     } catch (ex) {
+                      if (!dialogContext.mounted) return;
                       setDialogState(() {
                         erroFormulario =
                             ex.toString().replaceFirst('Exception: ', '');
@@ -340,27 +353,30 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                   child: const Text('Salvar'),
                 ),
               ],
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (salvou == true) {
-      try {
-        await _carregarModulos();
-      } finally {
-        if (criouModulo) {
-          _ignorarListener = false;
+      if (salvou == true) {
+        try {
+          await _carregarModulos();
+        } finally {
+          if (criouModulo) {
+            _ignorarListener = false;
+          }
         }
+      } else {
+        _ignorarListener = false;
       }
-    } else {
-      _ignorarListener = false;
+    } finally {
+      _erroFormularioTimer?.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      tituloController.dispose();
     }
-
-    tituloController.dispose();
   }
 
   Widget _buildModuloCard(
