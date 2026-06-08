@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'aula.dart';
 import 'basecard.dart';
+import 'configuracoes.dart';
 import 'leaderboard.dart';
 import 'models.dart';
 import 'navmenu.dart';
@@ -30,14 +31,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if(!await verificarSession() || await verificarAdmin()){
-          navegacaoSession(context, "/");  
-        }
-        _iniciarListeners();
+      if (!await verificarSession() || await verificarAdmin()) {
+        navegacaoSession(context, "/");
+      }
+      _iniciarListeners();
     });
   }
 
-  void _iniciarListeners() async{
+  void _iniciarListeners() async {
     final idUsuario = await getIdUsuario();
     _modulosListener = _firestore
         .collection('modulo')
@@ -45,10 +46,10 @@ class _ModulesScreenState extends State<ModulesScreen> {
         .listen((_) => _carregarModulos());
 
     _aulasListener = _firestore
-          .collection('usuarioAula')
-          .where('idUsuario', isEqualTo: idUsuario)
-          .snapshots()
-          .listen((_) => _carregarModulos());
+        .collection('usuarioAula')
+        .where('idUsuario', isEqualTo: idUsuario)
+        .snapshots()
+        .listen((_) => _carregarModulos());
   }
 
   @override
@@ -57,8 +58,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
     _aulasListener?.cancel();
     super.dispose();
   }
-
-
 
   Future<void> _carregarModulos() async {
     setState(() {
@@ -78,8 +77,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
 
     final docs = snapshot.docs.toList()
       ..sort(
-        (a, b) => ((a.data()['ordem'] ?? 0) as num)
-            .compareTo((b.data()['ordem'] ?? 0) as num),
+        (a, b) => ((a.data()['ordem'] ?? 0) as num).compareTo(
+          (b.data()['ordem'] ?? 0) as num,
+        ),
       );
 
     final modulos = await Future.wait(
@@ -91,8 +91,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
             .get();
 
         Set<String> idsModulos = listagemUsuarioAula.docs
-          .map((doc) => doc['idAula'] as String)
-          .toSet();
+            .map((doc) => doc['idAula'] as String)
+            .toSet();
 
         final dadosModulo = Map<String, dynamic>.from(doc.data());
         dadosModulo['completedLessons'] = idsModulos.length;
@@ -122,10 +122,10 @@ class _ModulesScreenState extends State<ModulesScreen> {
         title: const Text('Meus Módulos'),
         actions: [
           IconButton(
-              onPressed: ()=>{finalizarSession(context)},
-              disabledColor: Colors.grey,
-              icon: const Icon(Icons.logout, size: 30),
-            ),
+            onPressed: () => {finalizarSession(context)},
+            disabledColor: Colors.grey,
+            icon: const Icon(Icons.logout, size: 30),
+          ),
         ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
@@ -133,30 +133,34 @@ class _ModulesScreenState extends State<ModulesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _modulos.isEmpty
-              ? const Center(child: Text('Nenhum modulo cadastrado.'))
-              : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    for (final module in _modulos)
-                      ModuleCard(
-                        module: module,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LessonsScreen(
-                                idModulo: module.id,
-                                moduleTitle: module.title,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
+          ? const Center(child: Text('Nenhum modulo cadastrado.'))
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                for (final module in _modulos)
+                  ModuleCard(
+                    module: module,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LessonsScreen(
+                            idModulo: module.id,
+                            moduleTitle: module.title,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
     );
 
-    final List<Widget> telas = [telaModulos, const LeaderboardPage()];
+    final List<Widget> telas = [
+      telaModulos,
+      const LeaderboardPage(),
+      const ConfiguracoesPage(),
+    ];
 
     return Scaffold(
       body: telas[_selectedIndex],

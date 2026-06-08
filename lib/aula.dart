@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'basecard.dart';
+import 'configuracoes.dart';
 import 'conteudo.dart';
 import 'leaderboard.dart';
 import 'models.dart';
@@ -26,7 +27,8 @@ class LessonsScreen extends StatefulWidget {
 class _LessonsScreenState extends State<LessonsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _usuarioAulasListener;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+  _usuarioAulasListener;
 
   int _selectedIndex = 0;
   bool _isLoading = true;
@@ -47,13 +49,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
         .where("idModulo", isEqualTo: widget.idModulo)
         .snapshots()
         .listen(
-      (_) async {
-        await _carregarAulas();
-      },
-      onError: (error) async {
-        await _carregarAulas();
-      },
-    );
+          (_) async {
+            await _carregarAulas();
+          },
+          onError: (error) async {
+            await _carregarAulas();
+          },
+        );
   }
 
   void _iniciarListenerUsuarioAulas() async {
@@ -66,13 +68,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
         .where('idUsuario', isEqualTo: idUsuario)
         .snapshots()
         .listen(
-      (_) async {
-        await _carregarAulasConcluidas(idUsuario);
-      },
-      onError: (error) async {
-        await _carregarAulasConcluidas(idUsuario);
-      },
-    );
+          (_) async {
+            await _carregarAulasConcluidas(idUsuario);
+          },
+          onError: (error) async {
+            await _carregarAulasConcluidas(idUsuario);
+          },
+        );
   }
 
   @override
@@ -104,8 +106,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
     final docs = snapshot.docs.toList()
       ..sort(
-        (a, b) => ((a.data()['ordem'] ?? 0) as num)
-            .compareTo((b.data()['ordem'] ?? 0) as num),
+        (a, b) => ((a.data()['ordem'] ?? 0) as num).compareTo(
+          (b.data()['ordem'] ?? 0) as num,
+        ),
       );
 
     if (!mounted) return;
@@ -148,12 +151,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final telaAulas = Scaffold(
       appBar: AppBar(
         title: Text(widget.moduleTitle),
-        
+
         actions: [
           IconButton(
-              onPressed: ()=>{finalizarSession(context)},
-              disabledColor: Colors.grey,
-              icon: const Icon(Icons.logout, size: 30),
+            onPressed: () => {finalizarSession(context)},
+            disabledColor: Colors.grey,
+            icon: const Icon(Icons.logout, size: 30),
           ),
         ],
         backgroundColor: Colors.blueAccent,
@@ -162,36 +165,37 @@ class _LessonsScreenState extends State<LessonsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _aulas.isEmpty
-              ? const Center(child: Text('Nenhuma aula cadastrada.'))
-              : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    for (final lesson in _aulas)
-                      LessonCard(
-                        lesson: lesson,
-                        isCompleted: _aulasConcluidas.contains(lesson.id),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Conteudo(
-                                idAula: lesson.id,
-                                tituloAula: lesson.title,
-                                idModulo: widget.idModulo,
-                                moduleTitle: widget.moduleTitle,
-                                totalXP: lesson.totalXP
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
+          ? const Center(child: Text('Nenhuma aula cadastrada.'))
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                for (final lesson in _aulas)
+                  LessonCard(
+                    lesson: lesson,
+                    isCompleted: _aulasConcluidas.contains(lesson.id),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Conteudo(
+                            idAula: lesson.id,
+                            tituloAula: lesson.title,
+                            idModulo: widget.idModulo,
+                            moduleTitle: widget.moduleTitle,
+                            totalXP: lesson.totalXP,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
     );
 
     final List<Widget> telas = [
       telaAulas,
       const LeaderboardPage(),
+      const ConfiguracoesPage(),
     ];
 
     return Scaffold(

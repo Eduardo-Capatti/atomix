@@ -13,7 +13,7 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFFEEEEEE), 
+      backgroundColor: const Color(0xFFEEEEEE),
       elevation: 8.0,
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
@@ -28,14 +28,27 @@ class CustomBottomNavBar extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4.0),
             child: Icon(Icons.emoji_events, size: 28),
           ),
-          label: 'LEADER BOARD',
+          label: 'LEADERBOARD',
+        ),
+        BottomNavigationBarItem(
+          icon: Padding(
+            padding: EdgeInsets.only(bottom: 4.0),
+            child: Icon(Icons.settings_outlined, size: 28),
+          ),
+          label: 'USER',
         ),
       ],
       currentIndex: selectedIndex,
       selectedItemColor: Colors.blueAccent,
       unselectedItemColor: Colors.grey[600],
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 12),
+      selectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.normal,
+        fontSize: 12,
+      ),
       type: BottomNavigationBarType.fixed,
       onTap: onItemTapped,
     );
