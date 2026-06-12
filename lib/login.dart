@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text("Entrar"),
                 ),
 
-
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -170,6 +170,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.only(left: 5.0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       onPressed: () => Navigator.pushNamedAndRemoveUntil(
                         context,
                         "/cadastro",
@@ -182,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -192,6 +197,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.only(left: 5.0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
                       child: Text(
                         "Entrar como professor",

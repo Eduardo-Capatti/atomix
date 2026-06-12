@@ -115,6 +115,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF0066CC),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(

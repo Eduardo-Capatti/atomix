@@ -162,7 +162,7 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
                   onPressed: () => onLogin(context),
                   child: const Text("Entrar"),
                 ),
-
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -171,12 +171,17 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
                       style: TextStyle(color: Colors.blue[900]),
                     ),
                     TextButton(
-                        // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                        onPressed: () => Navigator.pushNamed(context, "/"),
-                        child: Text(
-                          "Entrar como aluno",
-                          style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
-                        ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.only(left: 5.0, top:5.0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
+                      onPressed: () => Navigator.pushNamed(context, "/"),
+                      child: Text(
+                        "Entrar como aluno",
+                        style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
+                      ),
                     ),
                   ],
                 ),

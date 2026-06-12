@@ -242,11 +242,12 @@ class _ModuloAdminState extends State<ModuloAdmin> {
               title: Text(editando ? 'Editar módulo' : 'Novo módulo'),
               content: SizedBox(
                 width: 520,
-                height: 140,
+                height: 180,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                  const SizedBox(height: 16),
                   TextField(
                     controller: tituloController,
                     maxLength: 50,

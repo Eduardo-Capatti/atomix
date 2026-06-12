@@ -180,10 +180,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
     final telaAulas = Scaffold(
+      backgroundColor: Colors.blue[50], 
       appBar: AppBar(
         title: Text(widget.moduleTitle),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF0066CC),
         foregroundColor: Colors.white,
       ),
       body: _isLoading

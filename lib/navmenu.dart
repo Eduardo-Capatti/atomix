@@ -39,7 +39,7 @@ class CustomBottomNavBar extends StatelessWidget {
         ),
       ],
       currentIndex: selectedIndex,
-      selectedItemColor: Colors.blueAccent,
+      selectedItemColor: Color(0xFF0066CC),
       unselectedItemColor: Colors.grey[600],
       selectedLabelStyle: const TextStyle(
         fontWeight: FontWeight.bold,

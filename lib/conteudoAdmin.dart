@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -1512,12 +1513,18 @@ class _YoutubePreviewState extends State<_YoutubePreview> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) {
+      return;
+    }
     _criarController();
   }
 
   @override
   void didUpdateWidget(covariant _YoutubePreview oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (kIsWeb) {
+      return;
+    }
 
     if (oldWidget.videoId != widget.videoId) {
       _controller?.close();
@@ -1544,6 +1551,10 @@ class _YoutubePreviewState extends State<_YoutubePreview> {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return _YoutubeThumbnailPreview(videoId: widget.videoId);
+    }
+
     if (_controller == null) {
       return const SizedBox.shrink();
     }
@@ -1555,6 +1566,53 @@ class _YoutubePreviewState extends State<_YoutubePreview> {
         child: YoutubePlayer(
           controller: _controller!,
           aspectRatio: 16 / 9,
+        ),
+      ),
+    );
+  }
+}
+
+class _YoutubeThumbnailPreview extends StatelessWidget {
+  final String videoId;
+
+  const _YoutubeThumbnailPreview({
+    required this.videoId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              'https://img.youtube.com/vi/$videoId/hqdefault.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey.shade200,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Nao foi possivel carregar a miniatura do video.',
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              },
+            ),
+            Container(
+              color: Colors.black.withOpacity(0.18),
+            ),
+            const Center(
+              child: Icon(
+                Icons.play_circle_fill_rounded,
+                color: Colors.white,
+                size: 64,
+              ),
+            ),
+          ],
         ),
       ),
     );

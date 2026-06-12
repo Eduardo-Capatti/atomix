@@ -221,7 +221,7 @@ class _CadastroPageState extends State<CadastroPage> {
                   onPressed: () => onRegister(context),
                   child: const Text("Criar conta"),
                 ),
-
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -231,6 +231,11 @@ class _CadastroPageState extends State<CadastroPage> {
                     ),
 
                     TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.only(left: 5.0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
                       onPressed: () =>
                           Navigator.pushReplacementNamed(context, "/"),

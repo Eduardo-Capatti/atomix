@@ -148,9 +148,11 @@ class _ModulesScreenState extends State<ModulesScreen> {
   @override
   Widget build(BuildContext context) {
     final telaModulos = Scaffold(
+      backgroundColor: Colors.blue[50], 
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Meus Módulos'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF0066CC),
         foregroundColor: Colors.white,
       ),
       body: _isLoading

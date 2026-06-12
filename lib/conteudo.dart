@@ -162,8 +162,10 @@ class ConteudoState extends State<Conteudo> {
         return;
       }
 
-      
-      final xp =  (await _verificarAulaConcluida() ? totalXP * 0.2 : totalXP) as int;  
+      final xpBase = widget.totalXP;
+      final xp = await _verificarAulaConcluida()
+          ? (xpBase * 0.2).round()
+          : xpBase;
 
       setState(() {
         paginas = paginasOrdenadas;
@@ -205,11 +207,13 @@ class ConteudoState extends State<Conteudo> {
       children: [
         IconButton(
           onPressed: paginaAtual == 1 ? null : voltarPagina,
+          color: Colors.white,
           disabledColor: Colors.grey,
           icon: const Icon(Icons.arrow_back, size: 30),
         ),
         IconButton(
           onPressed: paginaAtual == paginaTotal ? concluirAula : avancarPagina,
+          color: Colors.white,
           disabledColor: Colors.grey,
           icon: const Icon(Icons.arrow_forward, size: 30),
         ),
@@ -743,11 +747,15 @@ class ConteudoState extends State<Conteudo> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(scaffoldBackgroundColor: Colors.blue[50]),
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF0066CC),
+      ),
       home: Scaffold(
+        extendBody: true,
+        backgroundColor: const Color(0xFF0066CC),
         appBar: AppBar(
           toolbarHeight: 80,
-          backgroundColor: Colors.blue,
+          backgroundColor: const Color(0xFF0066CC),
           title: Row(
             children: [
               InkWell(
@@ -790,7 +798,7 @@ class ConteudoState extends State<Conteudo> {
               )
             : !_isLoading && paginas.isNotEmpty && !isExercise
                 ? Container(
-                    color: Colors.blue,
+                    color: const Color(0xFF0066CC),
                     child: _buildNavigationButtons(),
                   )
                 : null,
