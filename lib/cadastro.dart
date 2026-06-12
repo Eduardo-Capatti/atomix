@@ -46,7 +46,7 @@ class _CadastroPageState extends State<CadastroPage> {
       await credential.user!.updateDisplayName(txtNome.text);
 
       String idUsuario = credential.user!.uid;
-      
+
       //verificação se tudo estiver correto ir para a página de módulos
       if (mounted) {
         final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -54,7 +54,8 @@ class _CadastroPageState extends State<CadastroPage> {
 
         await novoDoc.set({
           'nomeUsuario': txtNome.text,
-          'xp': 0
+          'avatar_id': 0,
+          'xp': 0,
         });
         Navigator.pushReplacementNamed(context, "/");
       }
@@ -82,19 +83,19 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if(await verificarSession()){
-          print("logado");
+      if (await verificarSession()) {
+        print("logado");
 
-          if(await verificarAdmin()){
-            navegacaoSession(context, "/moduloAdmin");
-          }else{
-            navegacaoSession(context, "/modulos");
-          }
+        if (await verificarAdmin()) {
+          navegacaoSession(context, "/moduloAdmin");
+        } else {
+          navegacaoSession(context, "/modulos");
         }
+      }
     });
   }
 
@@ -223,21 +224,24 @@ class _CadastroPageState extends State<CadastroPage> {
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children:[
+                  children: [
+                    Text(
+                      "Já tem uma conta?",
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
 
-                      Text(
-                        "Já tem uma conta?",
-                        style: TextStyle(color: Colors.blue[900]),
-                      ),
-                     
-                      TextButton(
-                        // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                        onPressed: () => Navigator.pushReplacementNamed(context, "/"),
-                        child: Text(
-                          "Entrar",
-                          style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900)),  
+                    TextButton(
+                      // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
+                      onPressed: () =>
+                          Navigator.pushReplacementNamed(context, "/"),
+                      child: Text(
+                        "Entrar",
+                        style: TextStyle(
+                          color: Colors.blue[900],
+                          fontWeight: FontWeight(900),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ],
