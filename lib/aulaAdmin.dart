@@ -316,7 +316,7 @@ class _AulaAdminState extends State<AulaAdmin> {
               title: Text(editando ? 'Editar aula' : 'Nova aula'),
               content: SizedBox(
                 width: 520,
-                height: 620,
+                height: 320,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -458,6 +458,9 @@ class _AulaAdminState extends State<AulaAdmin> {
                         throw Exception('Informe um Total XP numérico válido.');
                       }
 
+                      if (url.isEmpty) {
+                        throw Exception('Selecione uma imagem antes de salvar.');
+                      }
                       if (url.isNotEmpty && converterBase64EmBytes(url) == null) {
                         throw Exception('A imagem informada é invalida.');
                       }

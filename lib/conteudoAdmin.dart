@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import 'base64.dart';
 import 'basecard.dart';
@@ -21,7 +22,6 @@ class ConteudoAdmin extends StatefulWidget {
 class _ConteudoAdminState extends State<ConteudoAdmin> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Timer? _erroFormularioTimer;
-  bool hasExercise = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginas = [];
   bool _isLoading = true;
   int _paginaAtualIndex = 0;
@@ -128,8 +128,6 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   Future<void> _carregarPaginas({int? paginaDesejada}) async {
     setState(() {
       _isLoading = true;
-      hasExercise = false;
-      print(hasExercise);
     });
 
     try {
@@ -484,6 +482,124 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     String? erroFormulario;
     final telaContext = context;
+    final bool paginaTemOutroExercicio = _conteudosPaginaAtual
+        .asMap()
+        .entries
+        .any((entry) => entry.key != index && entry.value['tipo'] == 'exercicio');
+    final bool hasExercise = paginaTemOutroExercicio;
+    final Map<String, Map<String, dynamic>> rascunhosPorTipo = {
+      'texto': {
+        'conteudo': tipo == 'texto' ? conteudoController.text : '',
+      },
+      'video': {
+        'conteudo': tipo == 'video' ? conteudoController.text : '',
+      },
+      'imagem': {
+        'conteudo': tipo == 'imagem' ? imagemBase64 : '',
+      },
+      'exercicio': {
+        'pergunta': tipo == 'exercicio' ? perguntaController.text : '',
+        'dica': tipo == 'exercicio' ? dicaController.text : '',
+        'tipo2': tipo == 'exercicio' ? tipo2 : 'texto',
+        'resposta': tipo == 'exercicio' ? respostaCorreta : 1,
+        'respostas': tipo == 'exercicio'
+            ? respostaControllers.map((controller) => controller.text).toList()
+            : <String>['', ''],
+        'respostasImagem': tipo == 'exercicio'
+            ? List<String>.from(respostasImagem)
+            : <String>['', ''],
+      },
+    };
+
+    void aplicarQuantidadeRespostas(int quantidade) {
+      while (respostaControllers.length > quantidade) {
+        respostaControllers.removeLast().dispose();
+      }
+
+      while (respostaControllers.length < quantidade) {
+        respostaControllers.add(TextEditingController());
+      }
+
+      while (respostasImagem.length > quantidade) {
+        respostasImagem.removeLast();
+      }
+
+      while (respostasImagem.length < quantidade) {
+        respostasImagem.add('');
+      }
+    }
+
+    void salvarRascunhoAtual() {
+      if (tipo == 'texto' || tipo == 'video') {
+        rascunhosPorTipo[tipo] = {
+          'conteudo': conteudoController.text,
+        };
+        return;
+      }
+
+      if (tipo == 'imagem') {
+        rascunhosPorTipo[tipo] = {
+          'conteudo': imagemBase64,
+        };
+        return;
+      }
+
+      if (tipo == 'exercicio') {
+        rascunhosPorTipo[tipo] = {
+          'pergunta': perguntaController.text,
+          'dica': dicaController.text,
+          'tipo2': tipo2,
+          'resposta': respostaCorreta,
+          'respostas': respostaControllers.map((controller) => controller.text).toList(),
+          'respostasImagem': List<String>.from(respostasImagem),
+        };
+      }
+    }
+
+    void restaurarCamposDoTipo(String novoTipo) {
+      final rascunho = rascunhosPorTipo[novoTipo] ?? <String, dynamic>{};
+
+      conteudoController.clear();
+      imagemBase64 = '';
+      perguntaController.clear();
+      dicaController.clear();
+      tipo2 = 'texto';
+      respostaCorreta = 1;
+      aplicarQuantidadeRespostas(2);
+
+      if (novoTipo == 'texto' || novoTipo == 'video') {
+        conteudoController.text = rascunho['conteudo']?.toString() ?? '';
+        return;
+      }
+
+      if (novoTipo == 'imagem') {
+        imagemBase64 = rascunho['conteudo']?.toString() ?? '';
+        conteudoController.text = imagemBase64;
+        return;
+      }
+
+      final respostas = List<String>.from(
+        rascunho['respostas'] as List? ?? const <String>['', ''],
+      );
+      final respostasImg = List<String>.from(
+        rascunho['respostasImagem'] as List? ?? const <String>['', ''],
+      );
+      final quantidade = respostas.isEmpty ? 2 : respostas.length;
+
+      aplicarQuantidadeRespostas(quantidade);
+      perguntaController.text = rascunho['pergunta']?.toString() ?? '';
+      dicaController.text = rascunho['dica']?.toString() ?? '';
+      tipo2 = rascunho['tipo2']?.toString() ?? 'texto';
+      respostaCorreta = ((rascunho['resposta'] as num?)?.toInt() ?? 1).clamp(
+        1,
+        quantidade,
+      );
+
+      for (int i = 0; i < quantidade; i++) {
+        respostaControllers[i].text = i < respostas.length ? respostas[i] : '';
+        respostasImagem[i] = i < respostasImg.length ? respostasImg[i] : '';
+      }
+    }
 
   Future<void> selecionarImagemResposta(
     int respostaIndex,
@@ -508,7 +624,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
               title: Text(editando ? 'Editar conteúdo' : 'Novo conteúdo'),
               content: SizedBox(
                 width: 520,
-                height: 620,
+                height: 320,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -530,34 +646,20 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                           DropdownMenuItem(value: 'imagem', child: Text('Imagem')),
                           DropdownMenuItem(value: 'video', child: Text('Vídeo')),
                           DropdownMenuItem(
-                            enabled: (!hasExercise || editando),
+                            enabled: !paginaTemOutroExercicio || tipo == 'exercicio',
                             value: 'exercicio',
                             child: Text('Exercício', style: TextStyle(color: (hasExercise && !editando) ? Colors.grey : Colors.black)),
                           ),
                         ],
                         onChanged: (value) {
                           if (value == null) return;
+                          if (value == tipo) return;
 
                           setDialogState(() {
+                            salvarRascunhoAtual();
                             tipo = value;
                             erroFormulario = null;
-
-                            if (tipo != 'imagem') {
-                              imagemBase64 = '';
-                            }
-
-                            if (tipo != 'exercicio') {
-                              perguntaController.clear();
-                            }
-
-                            if (tipo == 'exercicio' &&
-                                respostaControllers.length < 2) {
-                              respostaControllers.add(TextEditingController());
-                              respostaControllers.add(TextEditingController());
-                              respostasImagem.add('');
-                              respostasImagem.add('');
-                              respostaCorreta = 1;
-                            }
+                            restaurarCamposDoTipo(value);
                           });
                         },
                       ),
@@ -576,12 +678,24 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         ),
 
                       if (tipo == 'video')
-                        TextField(
-                          controller: conteudoController,
-                          decoration: const InputDecoration(
-                            labelText: 'Link do YouTube',
-                            border: OutlineInputBorder(),
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: conteudoController,
+                              decoration: const InputDecoration(
+                                labelText: 'Link do YouTube',
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (_) {
+                                setDialogState(() {
+                                  erroFormulario = null;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            _buildVideoPreview(conteudoController.text),
+                          ],
                         ),
 
                       if (tipo == 'imagem') ...[
@@ -811,6 +925,15 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                         setDialogState(() {
                           erroFormulario =
                               'Preencha o conteúdo antes de salvar.';
+                        });
+                        return;
+                      }
+
+                      if (tipo == 'video' &&
+                          YoutubePlayerController.convertUrlToId(valor) == null) {
+                        setDialogState(() {
+                          erroFormulario =
+                              'Informe um link vÃ¡lido do YouTube antes de salvar.';
                         });
                         return;
                       }
@@ -1045,6 +1168,48 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     );
   }
 
+  Widget _buildVideoPreview(String valor) {
+    final link = valor.trim();
+
+    if (link.isEmpty) {
+      return _buildPlaceholder('Nenhum link de video cadastrado.', tamanho: 220);
+    }
+
+    final videoId = YoutubePlayerController.convertUrlToId(link);
+
+    if (videoId == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            link,
+            style: const TextStyle(
+              color: Colors.blue,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPlaceholder('Link do YouTube inválido.', tamanho: 220),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          link,
+          style: const TextStyle(
+            color: Colors.blue,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _YoutubePreview(videoId: videoId),
+      ],
+    );
+  }
+
   List<int> _paginasVisiveis() {
     if (!_temPaginas) {
       return [];
@@ -1145,8 +1310,6 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   Widget _buildResumoExercicio(Map<String, dynamic> conteudo) {
-    setState(()=>hasExercise = true);
-    print(hasExercise);
     final pergunta = conteudo['pergunta']?.toString() ?? '';
     final tipo2 = conteudo['tipo2']?.toString() ?? 'texto';
     final respostas = List<String>.from(conteudo['conteudo'] as List? ?? []);
@@ -1190,7 +1353,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
             ),
             const SizedBox(height: 12),
             if (tipo == 'texto') Text(valor?.toString() ?? ''),
-            if (tipo == 'video') Text(valor?.toString() ?? ''),
+            if (tipo == 'video') _buildVideoPreview(valor?.toString() ?? ''),
             if (tipo == 'imagem') _buildImagemConteudoCard(valor?.toString() ?? ''),
             if (tipo == 'exercicio') _buildResumoExercicio(conteudo),
             const SizedBox(width: 12),
@@ -1328,6 +1491,72 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
                     ],
                   ),
                 ),
+    );
+  }
+}
+
+class _YoutubePreview extends StatefulWidget {
+  final String videoId;
+
+  const _YoutubePreview({
+    required this.videoId,
+  });
+
+  @override
+  State<_YoutubePreview> createState() => _YoutubePreviewState();
+}
+
+class _YoutubePreviewState extends State<_YoutubePreview> {
+  YoutubePlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _criarController();
+  }
+
+  @override
+  void didUpdateWidget(covariant _YoutubePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.videoId != widget.videoId) {
+      _controller?.close();
+      _criarController();
+    }
+  }
+
+  void _criarController() {
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.videoId,
+      autoPlay: false,
+      params: const YoutubePlayerParams(
+        showFullscreenButton: true,
+        playsInline: true,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller?.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller == null) {
+      return const SizedBox.shrink();
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: YoutubePlayer(
+          controller: _controller!,
+          aspectRatio: 16 / 9,
+        ),
+      ),
     );
   }
 }

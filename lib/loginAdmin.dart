@@ -92,10 +92,13 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.lock_person_outlined,
-                  size: 80,
-                  color: Colors.blue[900],
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 20),
 
