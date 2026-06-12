@@ -100,7 +100,6 @@ class ConteudoState extends State<Conteudo> {
     );
   }
 
-
   Future<bool> _verificarAulaConcluida() async{
     final idUsuario = await getIdUsuario();
 
@@ -412,9 +411,12 @@ class ConteudoState extends State<Conteudo> {
     _youtubeController = YoutubePlayerController.fromVideoId(
       videoId: videoId,
       autoPlay: false,
-      params: YoutubePlayerParams(
+      params: const YoutubePlayerParams(
+        showControls: true,
         showFullscreenButton: true,
         playsInline: true,
+        enableJavaScript: true,
+        strictRelatedVideos: true,
       ),
     );
 
@@ -443,13 +445,25 @@ class ConteudoState extends State<Conteudo> {
             style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: YoutubePlayer(
-                controller: _youtubeController!,
-                aspectRatio: 16 / 9,
+          ClipRect(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: RepaintBoundary(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: KeyedSubtree(
+                      key: ValueKey('youtube-$videoId-$paginaAtual'),
+                      child: YoutubePlayer(
+                        controller: _youtubeController!,
+                        aspectRatio: 16 / 9,
+                        enableFullScreenOnVerticalDrag: false,
+                        keepAlive: true,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -748,11 +762,15 @@ class ConteudoState extends State<Conteudo> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF0066CC),
+        scaffoldBackgroundColor: resultado != null
+            ? Colors.transparent
+            : const Color(0xFF0066CC),
       ),
       home: Scaffold(
         extendBody: true,
-        backgroundColor: const Color(0xFF0066CC),
+        backgroundColor: resultado != null
+            ? Colors.transparent
+            : const Color(0xFF0066CC),
         appBar: AppBar(
           toolbarHeight: 80,
           backgroundColor: const Color(0xFF0066CC),

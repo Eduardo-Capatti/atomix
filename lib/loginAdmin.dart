@@ -20,7 +20,7 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
     try {
 
       //login deu certo!
-      if (txtEmail.text.trim() != "admin@email.com" && txtSenha.text != "123456") {
+      if (txtEmail.text.trim() != "admin@email.com" || txtSenha.text != "123456") {
         throw FirebaseAuthException(
           code: 'invalid-credential'
         );
@@ -172,7 +172,7 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
                     ),
                     TextButton(
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.only(left: 5.0, top:5.0),
+                        padding: EdgeInsets.only(left: 5.0),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
