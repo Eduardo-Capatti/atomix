@@ -26,7 +26,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
     final email = _auth.currentUser?.email;
 
     if (email == null || email.isEmpty) {
-      _mostrarMensagem('Nao foi possivel localizar o e-mail do usuario.');
+      _mostrarMensagem('Não foi possível localizar o e-mail do usuário.');
       return;
     }
 
@@ -53,7 +53,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
     final idUsuario = await getIdUsuario();
 
     if (usuario == null) {
-      _mostrarMensagem('Usuario nao encontrado.');
+      _mostrarMensagem('Usuário não encontrado.');
       return;
     }
 
@@ -69,7 +69,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
         return;
       }
 
-      _mostrarMensagem('Nao foi possivel excluir a conta agora.');
+      _mostrarMensagem('Não foi possível excluir a conta agora.');
     }
   }
 
@@ -80,7 +80,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
         return AlertDialog(
           title: const Text('Excluir conta'),
           content: const Text(
-            'Essa acao remove seus dados de usuario e nao pode ser desfeita.',
+            'Essa ação remove seus dados de usuário e não pode ser desfeita.',
           ),
           actions: [
             TextButton(
@@ -121,12 +121,6 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
           'Atomix',
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => finalizarSession(context),
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +128,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Text(
-              'Configuracoes do Usuario',
+              'Configurações do Usuário',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 26,
@@ -188,7 +182,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
                                   Text(
                                     nome?.isNotEmpty == true
                                         ? nome!
-                                        : 'Usuario',
+                                        : 'Usuário',
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -291,7 +285,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
                         ),
                         const SizedBox(height: 32),
                         const Text(
-                          'Acoes da Conta',
+                          'Ações da Conta',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

@@ -36,14 +36,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
         navegacaoSession(context, "/");
       }
       _iniciarListeners();
-      if (!await verificarSession() || await verificarAdmin()) {
-        navegacaoSession(context, "/");
-      }
-      _iniciarListeners();
     });
   }
 
-  void _iniciarListeners() async {
   void _iniciarListeners() async {
     final idUsuario = await getIdUsuario();
     _modulosListener = _firestore
@@ -52,10 +47,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
         .listen((_) => _carregarModulos());
 
     _aulasListener = _firestore
-        .collection('usuarioAula')
-        .where('idUsuario', isEqualTo: idUsuario)
-        .snapshots()
-        .listen((_) => _carregarModulos());
         .collection('usuarioAula')
         .where('idUsuario', isEqualTo: idUsuario)
         .snapshots()
@@ -124,9 +115,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
 
     final docs = snapshot.docs.toList()
       ..sort(
-        (a, b) => ((a.data()['ordem'] ?? 0) as num).compareTo(
-          (b.data()['ordem'] ?? 0) as num,
-        ),
+        (a, b) => ((a.data()['ordem'] ?? 0) as num)
+            .compareTo((b.data()['ordem'] ?? 0) as num),
       );
 
     return Future.wait(
@@ -160,17 +150,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
     final telaModulos = Scaffold(
       appBar: AppBar(
         title: const Text('Meus Módulos'),
-        actions: [
-          IconButton(
-            onPressed: () => {finalizarSession(context)},
-            disabledColor: Colors.grey,
-            icon: const Icon(Icons.logout, size: 30),
-          ),
-            onPressed: () => {finalizarSession(context)},
-            disabledColor: Colors.grey,
-            icon: const Icon(Icons.logout, size: 30),
-          ),
-        ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),

@@ -645,8 +645,8 @@ class ConteudoState extends State<Conteudo> {
                   Tooltip(
                     message: dica,
                     child: Icon(
-                      Icons.lightbulb_circle_outlined,
-                      size: 18,
+                      Icons.tips_and_updates_outlined,
+                      size: 24,
                       color: Colors.white,
                     ),
                   ) : SizedBox(),

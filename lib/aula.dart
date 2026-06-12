@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'basecard.dart';
 import 'conteudo.dart';
+import 'configuracoes.dart';
 import 'leaderboard.dart';
 import 'models.dart';
 import 'navmenu.dart';
@@ -182,14 +183,6 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final telaAulas = Scaffold(
       appBar: AppBar(
         title: Text(widget.moduleTitle),
-        
-        actions: [
-          IconButton(
-              onPressed: ()=>{finalizarSession(context)},
-              disabledColor: Colors.grey,
-              icon: const Icon(Icons.logout, size: 30),
-          ),
-        ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
@@ -226,6 +219,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final List<Widget> telas = [
       telaAulas,
       const LeaderboardPage(),
+      const ConfiguracoesPage(),
     ];
 
     return Scaffold(

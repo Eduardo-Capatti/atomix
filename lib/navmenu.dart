@@ -35,7 +35,7 @@ class CustomBottomNavBar extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4.0),
             child: Icon(Icons.settings_outlined, size: 28),
           ),
-          label: 'USER',
+          label: 'MINHA CONTA',
         ),
       ],
       currentIndex: selectedIndex,

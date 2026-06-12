@@ -160,25 +160,49 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text("Entrar"),
                 ),
 
-                TextButton(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    "/cadastro",
-                    (route) => false,
-                  ),
-                  child: Text(
-                    "Cadastrar-se",
-                    style: TextStyle(color: Colors.blue[900]),
-                  ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Não tem uma conta?",
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
+
+                    TextButton(
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        "/cadastro",
+                        (route) => false,
+                      ),
+                      child: Text(
+                        "Cadastrar-se",
+                        style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
+                      ),
+                    ),
+                  ],
                 ),
 
-                TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
-                  child: Text(
-                    "Entrar como professor",
-                    style: TextStyle(color: Colors.blue[900]),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "É professor?",
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
+
+                    TextButton(
+                      onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
+                      child: Text(
+                        "Entrar como professor",
+                        style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
+                        
+                      ),
+                    ),
+                  ],
                 ),
+
+                
               ],
             ),
           ),

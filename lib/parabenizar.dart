@@ -8,10 +8,10 @@ import 'aula.dart';
 import 'session.dart';
 
 List<String> imagensParabenizar = [
-  '/assets/images/parabenizar/cientista.png',
-  '/assets/images/parabenizar/explosaoFundo.png',
-  '/assets/images/parabenizar/first.png',
-  '/assets/images/parabenizar/parabens.png',
+  'assets/images/cientista.png',
+  'assets/images/explosaoFundo.png',
+  'assets/images/first.png',
+  'assets/images/parabens.png',
 ];
 
 class Parabenizar extends StatefulWidget {
@@ -43,6 +43,7 @@ class ParabenizarState extends State<Parabenizar>
   late final AnimationController _infoAnimationController;
   late final Animation<double> _tempoAnimation;
   late final Animation<double> _xpAnimation;
+  late final Animation<double> _botaoAnimation;
 
   void tocarAudio() async {
     await player.play(AssetSource('sounds/aulaCompleta.wav'));
@@ -94,6 +95,10 @@ class ParabenizarState extends State<Parabenizar>
     _xpAnimation = CurvedAnimation(
       parent: _infoAnimationController,
       curve: const Interval(0.2, 1.0, curve: Curves.easeOutBack),
+    );
+    _botaoAnimation = CurvedAnimation(
+      parent: _infoAnimationController,
+      curve: const Interval(0.35, 1.0, curve: Curves.easeOutBack),
     );
     _infoAnimationController.forward(from: 0);
   }
@@ -214,20 +219,23 @@ class ParabenizarState extends State<Parabenizar>
                   ),
                 ],
               ),
-              FractionallySizedBox(
-                widthFactor: 0.6,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
-                  onPressed: concluir,
-                  icon: const Icon(
-                    Icons.check_circle,
-                    color: Color.fromRGBO(255, 255, 255, 1),
-                  ),
-                  label: const Text(
-                    'CONCLUIR',
-                    style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
+              _buildAnimatedInfoCard(
+                animation: _botaoAnimation,
+                child: FractionallySizedBox(
+                  widthFactor: 0.6,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    onPressed: concluir,
+                    icon: const Icon(
+                      Icons.check_circle,
+                      color: Color.fromRGBO(255, 255, 255, 1),
+                    ),
+                    label: const Text(
+                      'CONCLUIR',
+                      style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
+                    ),
                   ),
                 ),
               ),
