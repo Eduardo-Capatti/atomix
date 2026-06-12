@@ -1,14 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
-import 'session.dart';
-import 'aula.dart';
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
+import 'aula.dart';
+import 'session.dart';
 
-List<String> imagem = [
-  "assets/images/camaleaoPensativo.jpeg",
-  "assets/images/camaleaoPensativoVermelho.jpeg",
+List<String> imagensParabenizar = [
+  '/assets/images/parabenizar/cientista.png',
+  '/assets/images/parabenizar/explosaoFundo.png',
+  '/assets/images/parabenizar/first.png',
+  '/assets/images/parabenizar/parabens.png',
 ];
 
 class Parabenizar extends StatefulWidget {
@@ -24,22 +27,28 @@ class Parabenizar extends StatefulWidget {
     required this.tempo,
     required this.idAula,
     required this.idModulo,
-    required this.moduleTitle
+    required this.moduleTitle,
   });
 
   @override
   State<Parabenizar> createState() => ParabenizarState();
 }
 
-class ParabenizarState extends State<Parabenizar> {
+class ParabenizarState extends State<Parabenizar>
+    with SingleTickerProviderStateMixin {
   final player = AudioPlayer();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late final int randomInt = Random().nextInt(imagensParabenizar.length);
+
+  late final AnimationController _infoAnimationController;
+  late final Animation<double> _tempoAnimation;
+  late final Animation<double> _xpAnimation;
 
   void tocarAudio() async {
     await player.play(AssetSource('sounds/aulaCompleta.wav'));
   }
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  void concluir() async{
+  void concluir() async {
     await _firestore
         .collection('usuarios')
         .doc(await getIdUsuario())
@@ -54,7 +63,7 @@ class ParabenizarState extends State<Parabenizar> {
       'idAula': widget.idAula,
       'idModulo': widget.idModulo,
       'idUsuario': await getIdUsuario(),
-      'xp': widget.xp
+      'xp': widget.xp,
     });
 
     Navigator.pushAndRemoveUntil(
@@ -67,107 +76,162 @@ class ParabenizarState extends State<Parabenizar> {
       ),
       (route) => route.isFirst,
     );
-
   }
 
-  @override initState(){
+  @override
+  void initState() {
     super.initState();
     tocarAudio();
-  }
-  
-  int randomInt = Random().nextInt(2);
 
+    _infoAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _tempoAnimation = CurvedAnimation(
+      parent: _infoAnimationController,
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOutBack),
+    );
+    _xpAnimation = CurvedAnimation(
+      parent: _infoAnimationController,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOutBack),
+    );
+    _infoAnimationController.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _infoAnimationController.dispose();
+    player.dispose();
+    super.dispose();
+  }
+
+  Widget _buildAnimatedInfoCard({
+    required Animation<double> animation,
+    required Widget child,
+  }) {
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, animatedChild) {
+        final value = animation.value;
+
+        return Opacity(
+          opacity: value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 18),
+            child: Transform.scale(
+              scale: 0.92 + (value * 0.08),
+              child: animatedChild,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(scaffoldBackgroundColor: Colors.blue[50]),
       home: Scaffold(
         body: Center(
-          child: Container(
-            child: Column(
-              spacing: 20,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(width: 400, child: Image.asset(imagem[randomInt])),
-                Text(
-                  "Você completou a lição!",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 24,
-                    fontWeight: FontWeight(900),
-                  ),
+          child: Column(
+            spacing: 20,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 400,
+                child: Image.asset(imagensParabenizar[randomInt]),
+              ),
+              const Text(
+                'Você completou a lição!',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Card(
-                      elevation: 5, // Sombra do card
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildAnimatedInfoCard(
+                    animation: _tempoAnimation,
+                    child: Card(
+                      elevation: 5,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(
+                        side: const BorderSide(
                           color: Colors.blue,
                           width: 5,
-                        ), // Cantos arredondados
+                        ),
                       ),
                       child: Container(
                         width: 130,
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: Row(
                           spacing: 10,
                           children: [
-                            Icon(Icons.access_time, color: Colors.blue),
-                            Text(widget.tempo, style: TextStyle(color: Colors.blue)),
+                            const Icon(Icons.access_time, color: Colors.blue),
+                            Text(
+                              widget.tempo,
+                              style: const TextStyle(color: Colors.blue),
+                            ),
                           ],
                         ),
                       ),
                     ),
-                    Card(
-                      elevation: 5, // Sombra do card
+                  ),
+                  _buildAnimatedInfoCard(
+                    animation: _xpAnimation,
+                    child: Card(
+                      elevation: 5,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(
+                        side: const BorderSide(
                           color: Color.fromRGBO(251, 192, 45, 1),
                           width: 5,
-                        ), // Cantos arredondados
+                        ),
                       ),
                       child: Container(
                         width: 130,
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: Row(
                           spacing: 10,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.bolt,
-                              color: const Color.fromRGBO(251, 192, 45, 1),
+                              color: Color.fromRGBO(251, 192, 45, 1),
                             ),
                             Text(
-                              "+${widget.xp} XP",
+                              '+${widget.xp} XP',
                               style: TextStyle(color: Colors.yellow[700]),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-                FractionallySizedBox(
-                  widthFactor: 0.6,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                    onPressed: concluir,
-                    icon: Icon(
-                      Icons.check_circle,
-                      color: Color.fromRGBO(255, 255, 255, 1),
-                    ),
-                    label: Text(
-                      "CONCLUIR",
-                      style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
-                    ),
+                  ),
+                ],
+              ),
+              FractionallySizedBox(
+                widthFactor: 0.6,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
+                  onPressed: concluir,
+                  icon: const Icon(
+                    Icons.check_circle,
+                    color: Color.fromRGBO(255, 255, 255, 1),
+                  ),
+                  label: const Text(
+                    'CONCLUIR',
+                    style: TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

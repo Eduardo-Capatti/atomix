@@ -89,10 +89,13 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.lock_person_outlined,
-                  size: 80,
-                  color: Colors.blue[900],
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 20),
 
@@ -158,8 +161,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 TextButton(
-                  // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                  onPressed: () => Navigator.pushReplacementNamed(context, "/cadastro"),
+                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    "/cadastro",
+                    (route) => false,
+                  ),
                   child: Text(
                     "Cadastrar-se",
                     style: TextStyle(color: Colors.blue[900]),
@@ -167,7 +173,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 TextButton(
-                  // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
                   onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
                   child: Text(
                     "Entrar como professor",

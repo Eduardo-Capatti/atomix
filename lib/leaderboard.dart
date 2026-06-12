@@ -30,6 +30,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>{
       backgroundColor: Colors.blue[50], 
       
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'Ranking',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -70,6 +71,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>{
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: corPosicao,
+                    foregroundColor: Colors.white,
                     child: Text("$posicaoº"),
                   ),
                   title: Text(usuario['nomeUsuario'].toString()),

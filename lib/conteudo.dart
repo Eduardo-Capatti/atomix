@@ -88,6 +88,18 @@ class ConteudoState extends State<Conteudo> {
     super.dispose();
   }
 
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
 
   Future<bool> _verificarAulaConcluida() async{
     final idUsuario = await getIdUsuario();
@@ -108,67 +120,83 @@ class ConteudoState extends State<Conteudo> {
       _isLoading = true;
     });
 
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
     try {
-      snapshot = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: widget.idAula)
-          .orderBy('pagina')
-          .get();
-    } catch (_) {
-      snapshot = await _firestore
-          .collection('conteudo')
-          .where('idAula', isEqualTo: widget.idAula)
-          .get();
-    }
+      QuerySnapshot<Map<String, dynamic>> snapshot;
 
-    final paginasOrdenadas = snapshot.docs
-        .map((doc) => Map<String, dynamic>.from(doc.data()))
-        .toList()
-      ..sort(
-        (a, b) => ((a['pagina'] ?? 0) as num)
-            .compareTo((b['pagina'] ?? 0) as num),
-      );
+      try {
+        snapshot = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: widget.idAula)
+            .orderBy('pagina')
+            .get();
+      } catch (_) {
+        snapshot = await _firestore
+            .collection('conteudo')
+            .where('idAula', isEqualTo: widget.idAula)
+            .get();
+      }
 
-    if (!mounted) return;
+      final paginasOrdenadas = snapshot.docs
+          .map((doc) => Map<String, dynamic>.from(doc.data()))
+          .toList()
+        ..sort(
+          (a, b) => ((a['pagina'] ?? 0) as num)
+              .compareTo((b['pagina'] ?? 0) as num),
+        );
 
-    if (paginasOrdenadas.isEmpty) {
+      if (!mounted) return;
+
+      if (paginasOrdenadas.isEmpty) {
+        setState(() {
+          paginas = [];
+          conteudo = [];
+          paginaAtual = 1;
+          isExercise = false;
+          resultado = null;
+          respostaSelecionada = null;
+          _isLoading = false;
+        });
+        stopwatch
+          ..stop()
+          ..reset();
+        return;
+      }
+
+      
+      final xp =  (await _verificarAulaConcluida() ? totalXP * 0.2 : totalXP) as int;  
+
       setState(() {
-        paginas = [];
-        conteudo = [];
+        paginas = paginasOrdenadas;
         paginaAtual = 1;
+        totalXP = xp;
+        totalPerdeXP = xp * 10 ~/ 100;
+        countRespostaErrada = 0;
         isExercise = false;
         resultado = null;
         respostaSelecionada = null;
+        formarConteudo();
         _isLoading = false;
       });
+
       stopwatch
         ..stop()
-        ..reset();
-      return;
+        ..reset()
+        ..start();
+    } on FirebaseException catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar conteudos da aula.');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar conteudos da aula.');
     }
-
-    
-    final xp =  (await _verificarAulaConcluida() ? totalXP * 0.2 : totalXP) as int;  
-
-    setState(() {
-      paginas = paginasOrdenadas;
-      paginaAtual = 1;
-      totalXP = xp;
-      totalPerdeXP = xp * 10 ~/ 100;
-      countRespostaErrada = 0;
-      isExercise = false;
-      resultado = null;
-      respostaSelecionada = null;
-      formarConteudo();
-      _isLoading = false;
-    });
-
-    stopwatch
-      ..stop()
-      ..reset()
-      ..start();
   }
 
   Widget _buildNavigationButtons() {
@@ -617,7 +645,7 @@ class ConteudoState extends State<Conteudo> {
                   Tooltip(
                     message: dica,
                     child: Icon(
-                      Icons.info_outline,
+                      Icons.lightbulb_circle_outlined,
                       size: 18,
                       color: Colors.white,
                     ),
@@ -715,6 +743,7 @@ class ConteudoState extends State<Conteudo> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(scaffoldBackgroundColor: Colors.blue[50]),
       home: Scaffold(
         appBar: AppBar(
           toolbarHeight: 80,
@@ -766,17 +795,7 @@ class ConteudoState extends State<Conteudo> {
                   )
                 : null,
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFF7FBFA),
-                Color(0xFFF1F7FF),
-                Color(0xFFFFFBF2),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          color: Colors.blue[50],
           child: Center(
             child: SafeArea(
               child: AbsorbPointer(

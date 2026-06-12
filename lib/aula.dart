@@ -82,59 +82,93 @@ class _LessonsScreenState extends State<LessonsScreen> {
     super.dispose();
   }
 
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _carregarAulas() async {
     setState(() {
       _isLoading = true;
     });
 
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
     try {
-      snapshot = await _firestore
-          .collection('aula')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .orderBy('ordem')
-          .get();
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+
+      try {
+        snapshot = await _firestore
+            .collection('aula')
+            .where('idModulo', isEqualTo: widget.idModulo)
+            .orderBy('ordem')
+            .get();
+      } catch (_) {
+        snapshot = await _firestore
+            .collection('aula')
+            .where('idModulo', isEqualTo: widget.idModulo)
+            .get();
+      }
+
+      final docs = snapshot.docs.toList()
+        ..sort(
+          (a, b) => ((a.data()['ordem'] ?? 0) as num)
+              .compareTo((b.data()['ordem'] ?? 0) as num),
+        );
+
+      if (!mounted) return;
+
+      setState(() {
+        _aulas = docs
+            .map((doc) => LessonModel.fromMap(doc.data(), doc.id))
+            .toList();
+        _isLoading = false;
+      });
+    } on FirebaseException catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar aulas.');
     } catch (_) {
-      snapshot = await _firestore
-          .collection('aula')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .get();
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar aulas.');
     }
-
-    final docs = snapshot.docs.toList()
-      ..sort(
-        (a, b) => ((a.data()['ordem'] ?? 0) as num)
-            .compareTo((b.data()['ordem'] ?? 0) as num),
-      );
-
-    if (!mounted) return;
-
-    setState(() {
-      _aulas = docs
-          .map((doc) => LessonModel.fromMap(doc.data(), doc.id))
-          .toList();
-      _isLoading = false;
-    });
   }
 
   Future<void> _carregarAulasConcluidas([String? idUsuarioAtual]) async {
-    final idUsuario = idUsuarioAtual ?? await getIdUsuario();
+    try {
+      final idUsuario = idUsuarioAtual ?? await getIdUsuario();
 
-    final snapshot = await _firestore
-        .collection('usuarioAula')
-        .where('idModulo', isEqualTo: widget.idModulo)
-        .where('idUsuario', isEqualTo: idUsuario)
-        .get();
+      final snapshot = await _firestore
+          .collection('usuarioAula')
+          .where('idModulo', isEqualTo: widget.idModulo)
+          .where('idUsuario', isEqualTo: idUsuario)
+          .get();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _aulasConcluidas = snapshot.docs
-          .map((doc) => doc.data()['idAula']?.toString() ?? '')
-          .where((idAula) => idAula.isNotEmpty)
-          .toSet();
-    });
+      setState(() {
+        _aulasConcluidas = snapshot.docs
+            .map((doc) => doc.data()['idAula']?.toString() ?? '')
+            .where((idAula) => idAula.isNotEmpty)
+            .toSet();
+      });
+    } on FirebaseException catch (_) {
+      _mostrarErro('Erro ao carregar progresso das aulas.');
+    } catch (_) {
+      _mostrarErro('Erro ao carregar progresso das aulas.');
+    }
   }
 
   void _onItemTapped(int index) {

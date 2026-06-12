@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -30,14 +31,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if(!await verificarSession() || await verificarAdmin()){
-          navegacaoSession(context, "/");  
-        }
-        _iniciarListeners();
+      if (!await verificarSession() || await verificarAdmin()) {
+        navegacaoSession(context, "/");
+      }
+      _iniciarListeners();
     });
   }
 
-  void _iniciarListeners() async{
+  void _iniciarListeners() async {
     final idUsuario = await getIdUsuario();
     _modulosListener = _firestore
         .collection('modulo')
@@ -45,10 +46,10 @@ class _ModulesScreenState extends State<ModulesScreen> {
         .listen((_) => _carregarModulos());
 
     _aulasListener = _firestore
-          .collection('usuarioAula')
-          .where('idUsuario', isEqualTo: idUsuario)
-          .snapshots()
-          .listen((_) => _carregarModulos());
+        .collection('usuarioAula')
+        .where('idUsuario', isEqualTo: idUsuario)
+        .snapshots()
+        .listen((_) => _carregarModulos());
   }
 
   @override
@@ -58,14 +59,51 @@ class _ModulesScreenState extends State<ModulesScreen> {
     super.dispose();
   }
 
+  void _mostrarErro(String mensagem) {
+    if (!mounted) return;
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   Future<void> _carregarModulos() async {
     setState(() {
       _isLoading = true;
     });
 
-    final idUsuario = await getIdUsuario();
+    try {
+      final idUsuario = await getIdUsuario();
+      final resultados = await _buscarModulos(idUsuario);
+
+      if (!mounted) return;
+
+      setState(() {
+        _modulos = resultados;
+        _isLoading = false;
+      });
+    } on FirebaseException catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar módulos.');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+      _mostrarErro('Erro ao carregar módulos.');
+    }
+  }
+
+  Future<List<ModuleModel>> _buscarModulos(String idUsuario) async {
     QuerySnapshot<Map<String, dynamic>> snapshot;
 
     try {
@@ -74,15 +112,13 @@ class _ModulesScreenState extends State<ModulesScreen> {
       snapshot = await _firestore.collection('modulo').get();
     }
 
-    if (!mounted) return;
-
     final docs = snapshot.docs.toList()
       ..sort(
         (a, b) => ((a.data()['ordem'] ?? 0) as num)
             .compareTo((b.data()['ordem'] ?? 0) as num),
       );
 
-    final modulos = await Future.wait(
+    return Future.wait(
       docs.map((doc) async {
         final listagemUsuarioAula = await _firestore
             .collection('usuarioAula')
@@ -90,9 +126,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
             .where('idUsuario', isEqualTo: idUsuario)
             .get();
 
-        Set<String> idsModulos = listagemUsuarioAula.docs
-          .map((doc) => doc['idAula'] as String)
-          .toSet();
+        final idsModulos = listagemUsuarioAula.docs
+            .map((doc) => doc['idAula'] as String)
+            .toSet();
 
         final dadosModulo = Map<String, dynamic>.from(doc.data());
         dadosModulo['completedLessons'] = idsModulos.length;
@@ -100,13 +136,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
         return ModuleModel.fromMap(dadosModulo, doc.id);
       }),
     );
-
-    if (!mounted) return;
-
-    setState(() {
-      _modulos = modulos;
-      _isLoading = false;
-    });
   }
 
   void _onItemTapped(int index) {
@@ -122,10 +151,10 @@ class _ModulesScreenState extends State<ModulesScreen> {
         title: const Text('Meus Módulos'),
         actions: [
           IconButton(
-              onPressed: ()=>{finalizarSession(context)},
-              disabledColor: Colors.grey,
-              icon: const Icon(Icons.logout, size: 30),
-            ),
+            onPressed: () => {finalizarSession(context)},
+            disabledColor: Colors.grey,
+            icon: const Icon(Icons.logout, size: 30),
+          ),
         ],
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
@@ -133,7 +162,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _modulos.isEmpty
-              ? const Center(child: Text('Nenhum modulo cadastrado.'))
+              ? const Center(child: Text('Nenhum módulo cadastrado.'))
               : ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
@@ -158,11 +187,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
 
     final List<Widget> telas = [telaModulos, const LeaderboardPage()];
 
-    return Scaffold(
-      body: telas[_selectedIndex],
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: telas[_selectedIndex],
+        bottomNavigationBar: CustomBottomNavBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
+        ),
       ),
     );
   }

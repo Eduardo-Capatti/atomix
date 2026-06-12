@@ -103,6 +103,7 @@ class _CadastroPageState extends State<CadastroPage> {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.blue[900],
@@ -115,10 +116,13 @@ class _CadastroPageState extends State<CadastroPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.person_add_outlined,
-                  size: 80,
-                  color: Colors.blue[900],
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
