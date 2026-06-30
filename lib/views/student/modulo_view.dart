@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'aula.dart';
-import 'basecard.dart';
-import 'configuracoes.dart';
-import 'leaderboard.dart';
-import 'models.dart';
-import 'navmenu.dart';
-import 'session.dart';
+import '../../controllers/modules_controller.dart';
+import '../../controllers/session_controller.dart';
+import '../../models/entities/lesson_models.dart';
+import '../widgets/basecard.dart';
+import '../widgets/navmenu.dart';
+import 'aula_view.dart';
+import 'configuracoes_view.dart';
+import 'leaderboard_view.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -19,7 +20,7 @@ class ModulesScreen extends StatefulWidget {
 }
 
 class _ModulesScreenState extends State<ModulesScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ModulesController _controller = ModulesController();
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _modulosListener;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
 
@@ -32,7 +33,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!await verificarSession() || await verificarAdmin()) {
+      if (!await _controller.canAccessStudentArea()) {
         navegacaoSession(context, "/");
       }
       _iniciarListeners();
@@ -40,17 +41,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   void _iniciarListeners() async {
-    final idUsuario = await getIdUsuario();
-    _modulosListener = _firestore
-        .collection('modulo')
-        .snapshots()
-        .listen((_) => _carregarModulos());
-
-    _aulasListener = _firestore
-        .collection('usuarioAula')
-        .where('idUsuario', isEqualTo: idUsuario)
-        .snapshots()
-        .listen((_) => _carregarModulos());
+    final idUsuario = await _controller.currentUserId();
+    _modulosListener = _controller.watchModules().listen((_) => _carregarModulos());
+    _aulasListener = _controller.watchUserLessons(idUsuario).listen((_) => _carregarModulos());
   }
 
   @override
@@ -78,8 +71,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
     });
 
     try {
-      final idUsuario = await getIdUsuario();
-      final resultados = await _buscarModulos(idUsuario);
+      final idUsuario = await _controller.currentUserId();
+      final resultados = await _controller.fetchModules(idUsuario);
 
       if (!mounted) return;
 
@@ -102,41 +95,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
       });
       _mostrarErro('Erro ao carregar módulos.');
     }
-  }
-
-  Future<List<ModuleModel>> _buscarModulos(String idUsuario) async {
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
-    try {
-      snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
-    } catch (_) {
-      snapshot = await _firestore.collection('modulo').get();
-    }
-
-    final docs = snapshot.docs.toList()
-      ..sort(
-        (a, b) => ((a.data()['ordem'] ?? 0) as num)
-            .compareTo((b.data()['ordem'] ?? 0) as num),
-      );
-
-    return Future.wait(
-      docs.map((doc) async {
-        final listagemUsuarioAula = await _firestore
-            .collection('usuarioAula')
-            .where('idModulo', isEqualTo: doc.id)
-            .where('idUsuario', isEqualTo: idUsuario)
-            .get();
-
-        final idsModulos = listagemUsuarioAula.docs
-            .map((doc) => doc['idAula'] as String)
-            .toSet();
-
-        final dadosModulo = Map<String, dynamic>.from(doc.data());
-        dadosModulo['completedLessons'] = idsModulos.length;
-
-        return ModuleModel.fromMap(dadosModulo, doc.id);
-      }),
-    );
   }
 
   void _onItemTapped(int index) {

@@ -1,11 +1,10 @@
 import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'aula.dart';
-import 'session.dart';
+import '../../controllers/completion_controller.dart';
+import 'aula_view.dart';
 
 List<String> imagensParabenizar = [
   'assets/images/cientista.png',
@@ -37,7 +36,7 @@ class Parabenizar extends StatefulWidget {
 class ParabenizarState extends State<Parabenizar>
     with SingleTickerProviderStateMixin {
   final player = AudioPlayer();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CompletionController _controller = CompletionController();
   late final int randomInt = Random().nextInt(imagensParabenizar.length);
 
   late final AnimationController _infoAnimationController;
@@ -50,22 +49,11 @@ class ParabenizarState extends State<Parabenizar>
   }
 
   void concluir() async {
-    await _firestore
-        .collection('usuarios')
-        .doc(await getIdUsuario())
-        .update({
-          'xp': FieldValue.increment(widget.xp),
-        });
-
-    final novoDoc = _firestore.collection('usuarioAula').doc();
-
-    await novoDoc.set({
-      'id': novoDoc.id,
-      'idAula': widget.idAula,
-      'idModulo': widget.idModulo,
-      'idUsuario': await getIdUsuario(),
-      'xp': widget.xp,
-    });
+    await _controller.completeLesson(
+      xp: widget.xp,
+      idAula: widget.idAula,
+      idModulo: widget.idModulo,
+    );
 
     Navigator.pushAndRemoveUntil(
       context,

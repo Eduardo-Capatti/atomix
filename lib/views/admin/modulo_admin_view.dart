@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'aulaAdmin.dart';
-import 'basecard.dart';
-import 'session.dart';
+import '../../controllers/admin_controller.dart';
+import '../../controllers/session_controller.dart';
+import '../widgets/basecard.dart';
+import 'aula_admin_view.dart';
 
 class ModuloAdmin extends StatefulWidget {
   const ModuloAdmin({super.key});
@@ -15,7 +16,7 @@ class ModuloAdmin extends StatefulWidget {
 }
 
 class _ModuloAdminState extends State<ModuloAdmin> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AdminController _controller = AdminController();
   Timer? _erroFormularioTimer;
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _modulos = [];
@@ -55,7 +56,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!await verificarSession() || !await verificarAdmin()) {
+      if (!await _controller.canAccessAdminArea()) {
         navegacaoSession(context, "/");
         return;
       }
@@ -65,11 +66,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
   }
 
   void _iniciarListenerModulos() {
-    _modulosListener = _firestore
-        .collection('modulo')
-        .orderBy('ordem')
-        .snapshots()
-        .listen(
+    _modulosListener = _controller.watchModules().listen(
       (_) async {
         if (_ignorarListener) return;
         await _carregarModulos();
@@ -96,26 +93,12 @@ class _ModuloAdminState extends State<ModuloAdmin> {
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
-      } catch (_) {
-        snapshot = await _firestore.collection('modulo').get();
-
-        for (int i = 0; i < snapshot.docs.length; i++) {
-          await _firestore.collection('modulo').doc(snapshot.docs[i].id).set({
-            'ordem': i,
-          }, SetOptions(merge: true));
-        }
-
-        snapshot = await _firestore.collection('modulo').orderBy('ordem').get();
-      }
+      final modulos = await _controller.fetchModules();
 
       if (!mounted) return;
 
       setState(() {
-        _modulos = snapshot.docs;
+        _modulos = modulos;
         _isLoading = false;
       });
     } on FirebaseException {
@@ -136,15 +119,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
   }
 
   Future<void> _salvarNovaOrdem() async {
-    final batch = _firestore.batch();
-
-    for (int i = 0; i < _modulos.length; i++) {
-      batch.update(_firestore.collection('modulo').doc(_modulos[i].id), {
-        'ordem': i,
-      });
-    }
-
-    await batch.commit();
+    await _controller.saveModuleOrder(_modulos);
   }
 
   Future<void> _reordenarModulos(int oldIndex, int newIndex) async {
@@ -175,31 +150,7 @@ class _ModuloAdminState extends State<ModuloAdmin> {
 
   void _excluirModulo(String idModulo) async {
     try {
-      final listaAulas = await _firestore
-          .collection('aula')
-          .where('idModulo', isEqualTo: idModulo)
-          .get();
-
-      final batch = _firestore.batch();
-
-      batch.delete(
-        _firestore.collection('modulo').doc(idModulo),
-      );
-
-      for (var aula in listaAulas.docs) {
-        batch.delete(aula.reference);
-
-        final conteudos = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: aula['id'])
-            .get();
-
-        for (var conteudo in conteudos.docs) {
-          batch.delete(conteudo.reference);
-        }
-      }
-
-      await batch.commit();
+      await _controller.deleteModule(idModulo);
     } on FirebaseException {
       _mostrarErro('Falha ao excluir o módulo.');
     } catch (_) {
@@ -305,22 +256,19 @@ class _ModuloAdminState extends State<ModuloAdmin> {
                       }
 
                       if (editando) {
-                        await _firestore.collection('modulo').doc(modulo.id).update({
-                          'titulo': titulo,
-                          'dificuldade': dificuldade,
-                        });
+                        await _controller.updateModule(
+                          idModulo: modulo.id,
+                          titulo: titulo,
+                          dificuldade: dificuldade,
+                        );
                       } else {
                         _ignorarListener = true;
                         criouModulo = true;
-                        final novoDoc = _firestore.collection('modulo').doc();
-
-                        await novoDoc.set({
-                          'id': novoDoc.id,
-                          'titulo': titulo,
-                          'dificuldade': dificuldade,
-                          'quantidade': 0,
-                          'ordem': _modulos.length,
-                        });
+                        await _controller.createModule(
+                          titulo: titulo,
+                          dificuldade: dificuldade,
+                          ordem: _modulos.length,
+                        );
                       }
 
                       _erroFormularioTimer?.cancel();

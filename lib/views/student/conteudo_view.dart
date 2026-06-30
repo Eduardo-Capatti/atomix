@@ -1,11 +1,11 @@
-import 'package:atomix/parabenizar.dart';
-import 'package:atomix/session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import 'base64.dart';
+import '../../controllers/content_controller.dart';
+import '../../utils/image_base64.dart';
+import 'parabenizar_view.dart';
 
 class Conteudo extends StatefulWidget {
   final String idAula;
@@ -29,6 +29,7 @@ class Conteudo extends StatefulWidget {
 
 class ConteudoState extends State<Conteudo> {
   final player = AudioPlayer();
+  final ContentController _controller = ContentController();
 
   String dica = '';
 
@@ -39,8 +40,6 @@ class ConteudoState extends State<Conteudo> {
       await player.play(AssetSource('sounds/erro.mp3'));
     }
   }
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   YoutubePlayerController? _youtubeController;
   final ScrollController _scrollController = ScrollController();
@@ -101,17 +100,7 @@ class ConteudoState extends State<Conteudo> {
   }
 
   Future<bool> _verificarAulaConcluida() async{
-    final idUsuario = await getIdUsuario();
-
-    QuerySnapshot<Map<String, dynamic>> snapshot;
-
-    snapshot = await _firestore
-      .collection('usuarioAula')
-      .where('idAula', isEqualTo: widget.idAula)
-      .where('idUsuario', isEqualTo: idUsuario)
-      .get();
-    
-    return snapshot.docs.isNotEmpty;
+    return _controller.isLessonCompleted(widget.idAula);
   }
 
   Future<void> _carregarConteudos() async {
@@ -120,28 +109,7 @@ class ConteudoState extends State<Conteudo> {
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: widget.idAula)
-            .orderBy('pagina')
-            .get();
-      } catch (_) {
-        snapshot = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: widget.idAula)
-            .get();
-      }
-
-      final paginasOrdenadas = snapshot.docs
-          .map((doc) => Map<String, dynamic>.from(doc.data()))
-          .toList()
-        ..sort(
-          (a, b) => ((a['pagina'] ?? 0) as num)
-              .compareTo((b['pagina'] ?? 0) as num),
-        );
+      final paginasOrdenadas = await _controller.fetchLessonPages(widget.idAula);
 
       if (!mounted) return;
 

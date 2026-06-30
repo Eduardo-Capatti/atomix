@@ -2,13 +2,13 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'basecard.dart';
-import 'conteudo.dart';
-import 'configuracoes.dart';
-import 'leaderboard.dart';
-import 'models.dart';
-import 'navmenu.dart';
-import 'session.dart';
+import '../../controllers/lessons_controller.dart';
+import '../../models/entities/lesson_models.dart';
+import '../widgets/basecard.dart';
+import '../widgets/navmenu.dart';
+import 'configuracoes_view.dart';
+import 'conteudo_view.dart';
+import 'leaderboard_view.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String idModulo;
@@ -25,7 +25,7 @@ class LessonsScreen extends StatefulWidget {
 }
 
 class _LessonsScreenState extends State<LessonsScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LessonsController _controller = LessonsController();
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _aulasListener;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _usuarioAulasListener;
 
@@ -42,12 +42,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   void _iniciarListenerAulas() {
-    _aulasListener = _firestore
-        .collection('aula')
-        .orderBy('ordem')
-        .where("idModulo", isEqualTo: widget.idModulo)
-        .snapshots()
-        .listen(
+    _aulasListener = _controller.watchLessons(widget.idModulo).listen(
       (_) async {
         await _carregarAulas();
       },
@@ -58,14 +53,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   void _iniciarListenerUsuarioAulas() async {
-    final idUsuario = await getIdUsuario();
+    final idUsuario = await _controller.currentUserId();
     if (!mounted) return;
 
-    _usuarioAulasListener = _firestore
-        .collection('usuarioAula')
-        .where('idModulo', isEqualTo: widget.idModulo)
-        .where('idUsuario', isEqualTo: idUsuario)
-        .snapshots()
+    _usuarioAulasListener = _controller
+        .watchCompletedLessons(idModulo: widget.idModulo, idUsuario: idUsuario)
         .listen(
       (_) async {
         await _carregarAulasConcluidas(idUsuario);
@@ -101,33 +93,12 @@ class _LessonsScreenState extends State<LessonsScreen> {
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _firestore
-            .collection('aula')
-            .where('idModulo', isEqualTo: widget.idModulo)
-            .orderBy('ordem')
-            .get();
-      } catch (_) {
-        snapshot = await _firestore
-            .collection('aula')
-            .where('idModulo', isEqualTo: widget.idModulo)
-            .get();
-      }
-
-      final docs = snapshot.docs.toList()
-        ..sort(
-          (a, b) => ((a.data()['ordem'] ?? 0) as num)
-              .compareTo((b.data()['ordem'] ?? 0) as num),
-        );
+      final aulas = await _controller.fetchLessons(widget.idModulo);
 
       if (!mounted) return;
 
       setState(() {
-        _aulas = docs
-            .map((doc) => LessonModel.fromMap(doc.data(), doc.id))
-            .toList();
+        _aulas = aulas;
         _isLoading = false;
       });
     } on FirebaseException catch (_) {
@@ -149,21 +120,16 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
   Future<void> _carregarAulasConcluidas([String? idUsuarioAtual]) async {
     try {
-      final idUsuario = idUsuarioAtual ?? await getIdUsuario();
-
-      final snapshot = await _firestore
-          .collection('usuarioAula')
-          .where('idModulo', isEqualTo: widget.idModulo)
-          .where('idUsuario', isEqualTo: idUsuario)
-          .get();
+      final idUsuario = idUsuarioAtual ?? await _controller.currentUserId();
+      final aulasConcluidas = await _controller.fetchCompletedLessonIds(
+        idModulo: widget.idModulo,
+        idUsuario: idUsuario,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _aulasConcluidas = snapshot.docs
-            .map((doc) => doc.data()['idAula']?.toString() ?? '')
-            .where((idAula) => idAula.isNotEmpty)
-            .toSet();
+        _aulasConcluidas = aulasConcluidas;
       });
     } on FirebaseException catch (_) {
       _mostrarErro('Erro ao carregar progresso das aulas.');

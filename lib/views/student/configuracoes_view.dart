@@ -2,8 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'avatar_assets.dart';
-import 'session.dart';
+import '../../controllers/session_controller.dart';
+import '../../controllers/settings_controller.dart';
+import '../../models/entities/avatar_assets.dart';
 
 class ConfiguracoesPage extends StatefulWidget {
   const ConfiguracoesPage({super.key});
@@ -13,33 +14,24 @@ class ConfiguracoesPage extends StatefulWidget {
 }
 
 class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SettingsController _controller = SettingsController();
   int? _avatarIdSelecionado;
 
   Future<DocumentSnapshot<Map<String, dynamic>>> _carregarUsuario() async {
-    final idUsuario = await getIdUsuario();
-    return _firestore.collection('usuarios').doc(idUsuario).get();
+    return _controller.loadCurrentUser();
   }
 
   Future<void> _trocarSenha() async {
-    final email = _auth.currentUser?.email;
-
-    if (email == null || email.isEmpty) {
-      _mostrarMensagem('Não foi possível localizar o e-mail do usuário.');
-      return;
+    try {
+      await _controller.sendPasswordReset();
+      _mostrarMensagem('Enviamos um link para redefinir a senha no seu e-mail.');
+    } catch (ex) {
+      _mostrarMensagem(ex.toString().replaceFirst('Exception: ', ''));
     }
-
-    await _auth.sendPasswordResetEmail(email: email);
-    _mostrarMensagem('Enviamos um link para redefinir a senha no seu e-mail.');
   }
 
   Future<void> _salvarAvatar(int avatarId) async {
-    final idUsuario = await getIdUsuario();
-
-    await _firestore.collection('usuarios').doc(idUsuario).update({
-      'avatar_id': avatarId,
-    });
+    await _controller.saveAvatar(avatarId);
 
     if (!mounted) return;
 
@@ -49,17 +41,8 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
   }
 
   Future<void> _excluirConta() async {
-    final usuario = _auth.currentUser;
-    final idUsuario = await getIdUsuario();
-
-    if (usuario == null) {
-      _mostrarMensagem('Usuário não encontrado.');
-      return;
-    }
-
     try {
-      await _firestore.collection('usuarios').doc(idUsuario).delete();
-      await usuario.delete();
+      await _controller.deleteAccount();
       if (!mounted) return;
 
       finalizarSession(context);
@@ -110,7 +93,7 @@ class _ConfiguracoesPageState extends State<ConfiguracoesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final usuarioAuth = _auth.currentUser;
+    final usuarioAuth = _controller.currentUser;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0066CC),

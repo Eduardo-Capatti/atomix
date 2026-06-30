@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'session.dart';
+
+import '../../controllers/auth_controller.dart';
+import '../../controllers/session_controller.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -15,64 +16,40 @@ class _CadastroPageState extends State<CadastroPage> {
   TextEditingController txtEmail = TextEditingController();
   TextEditingController txtSenha = TextEditingController();
   TextEditingController txtRepetirSenha = TextEditingController();
+  final AuthController _authController = AuthController();
 
   bool esconderSenha = true;
   bool esconderRepetirSenha = true;
 
   // Função de registro integrada
   Future<void> onRegister(BuildContext context) async {
-    //Verificar se as senhas são iguais
-    if (txtSenha.text != txtRepetirSenha.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("As senhas não são iguais!"),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     try {
-      //Criar usuário
-      var credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: txtEmail.text
-                .trim(), // .trim() remove espaços vazios acidentais
-            password: txtSenha.text,
-          );
-
-      // Colocar nome do usuário no perfil
-      await credential.user!.updateDisplayName(txtNome.text);
-
-      String idUsuario = credential.user!.uid;
+      await _authController.register(
+        name: txtNome.text,
+        email: txtEmail.text,
+        password: txtSenha.text,
+        repeatPassword: txtRepetirSenha.text,
+      );
 
       //verificação se tudo estiver correto ir para a página de módulos
       if (mounted) {
-        final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-        final novoDoc = _firestore.collection('usuarios').doc(idUsuario);
-
-        await novoDoc.set({
-          'nomeUsuario': txtNome.text,
-          'avatar_id': 0,
-          'xp': 0,
-        });
         Navigator.pushReplacementNamed(context, "/");
       }
     } on FirebaseAuthException catch (ex) {
       // Traduzir os erros dos firebase para o português
-      String errorMessage = ex.message ?? "Erro desconhecido";
-
-      if (ex.code == 'weak-password') {
-        errorMessage = 'A senha fornecida é muito fraca (mínimo 6 caracteres).';
-      } else if (ex.code == 'email-already-in-use') {
-        errorMessage = 'Já existe uma conta com este e-mail.';
-      } else if (ex.code == 'invalid-email') {
-        errorMessage = 'O e-mail fornecido não é válido.';
-      }
+      String errorMessage = _authController.translateRegisterError(ex);
 
       final snackBar = SnackBar(
         content: Text(errorMessage),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    } catch (ex) {
+      final snackBar = SnackBar(
+        content: Text(ex.toString().replaceFirst('Exception: ', '')),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
       );

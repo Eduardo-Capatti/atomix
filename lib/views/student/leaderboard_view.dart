@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../controllers/leaderboard_controller.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -9,16 +10,10 @@ class LeaderboardPage extends StatefulWidget {
 }
 
 class _LeaderboardPageState extends State<LeaderboardPage>{
+  final LeaderboardController _controller = LeaderboardController();
 
   Future<List<Map<String, dynamic>>> rankingUsers() async{
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-      .collection('usuarios')
-      .orderBy('xp', descending: true)
-      .limit(50)
-      .get();
-
-      return snapshot.docs.map((doc) => doc.data() as Map<String,dynamic>)
-      .toList();
+      return _controller.rankingUsers();
   }  
 
   @override

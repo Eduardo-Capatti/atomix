@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'base64.dart';
-import 'models.dart';
+import '../../models/entities/lesson_models.dart';
+import '../../utils/image_base64.dart';
 
 class CustomAppCard extends StatelessWidget {
   final Widget child;

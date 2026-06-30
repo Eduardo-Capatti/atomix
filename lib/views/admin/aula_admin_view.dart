@@ -3,10 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'base64.dart';
-import 'basecard.dart';
-import 'conteudoAdmin.dart';
-import 'session.dart';
+import '../../controllers/admin_controller.dart';
+import '../../controllers/session_controller.dart';
+import '../../utils/image_base64.dart';
+import '../widgets/basecard.dart';
+import 'conteudo_admin_view.dart';
 
 class AulaAdmin extends StatefulWidget {
   final String idModulo;
@@ -25,7 +26,7 @@ class AulaAdmin extends StatefulWidget {
 class _AulaAdminState extends State<AulaAdmin> {
   late int quantidade = widget.quantidade;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AdminController _controller = AdminController();
   Timer? _erroFormularioTimer;
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _aulas = [];
@@ -76,12 +77,7 @@ class _AulaAdminState extends State<AulaAdmin> {
   }
 
   void _iniciarListenerAula() {
-    _aulaListener = _firestore
-        .collection('aula')
-        .orderBy('ordem')
-        .where('idModulo', isEqualTo: widget.idModulo)
-        .snapshots()
-        .listen(
+    _aulaListener = _controller.watchLessons(widget.idModulo).listen(
       (_) async {
         if(_ignorarListener) return;
         await _carregarAulas();
@@ -106,37 +102,12 @@ class _AulaAdminState extends State<AulaAdmin> {
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _firestore
-            .collection('aula')
-            .orderBy('ordem')
-            .where('idModulo', isEqualTo: widget.idModulo)
-            .get();
-      } catch (_) {
-        snapshot = await _firestore
-            .collection('aula')
-            .where('idModulo', isEqualTo: widget.idModulo)
-            .get();
-
-        for (int i = 0; i < snapshot.docs.length; i++) {
-          await _firestore.collection('aula').doc(snapshot.docs[i].id).set({
-            'ordem': i,
-          }, SetOptions(merge: true));
-        }
-
-        snapshot = await _firestore
-            .collection('aula')
-            .where('idModulo', isEqualTo: widget.idModulo)
-            .orderBy('ordem')
-            .get();
-      }
+      final aulas = await _controller.fetchLessons(widget.idModulo);
 
       if (!mounted) return;
 
       setState(() {
-        _aulas = snapshot.docs;
+        _aulas = aulas;
         _isLoading = false;
       });
     } on FirebaseException {
@@ -157,15 +128,7 @@ class _AulaAdminState extends State<AulaAdmin> {
   }
 
   Future<void> _salvarNovaOrdem() async {
-    final batch = _firestore.batch();
-
-    for (int i = 0; i < _aulas.length; i++) {
-      batch.update(_firestore.collection('aula').doc(_aulas[i].id), {
-        'ordem': i,
-      });
-    }
-
-    await batch.commit();
+    await _controller.saveLessonOrder(_aulas);
   }
 
   Future<void> _reordenarAulas(int oldIndex, int newIndex) async {
@@ -197,29 +160,12 @@ class _AulaAdminState extends State<AulaAdmin> {
   Future<void> _atualizarQuantidadeAulasModulo(int delta) async {
     quantidade += delta;
 
-    await _firestore.collection('modulo').doc(widget.idModulo).update({
-      'quantidade': FieldValue.increment(delta),
-    });
+    await _controller.updateModuleLessonCount(widget.idModulo, delta);
   }
 
   void _excluirAula(String idAula) async {
     try {
-      final listaConteudo = await _firestore
-      .collection('conteudo')
-      .where('idAula', isEqualTo: idAula)
-      .get();
-
-      final batch = _firestore.batch();
-
-      batch.delete(
-        _firestore.collection('aula').doc(idAula),
-      );
-
-      for (var conteudo in listaConteudo.docs) {
-        batch.delete(conteudo.reference);
-      }
-
-      await batch.commit();
+      await _controller.deleteLesson(idAula);
       await _atualizarQuantidadeAulasModulo(-1);
     } on FirebaseException {
       _mostrarErro('Falha ao excluir a aula.');
@@ -466,27 +412,24 @@ class _AulaAdminState extends State<AulaAdmin> {
                       }
 
                       if (editando) {
-                        await _firestore.collection('aula').doc(aula.id).update({
-                          'titulo': titulo,
-                          'tempoEstimado': tempoEstimado,
-                          'totalXP': totalXP,
-                          'url': url,
-                        });
+                        await _controller.updateLesson(
+                          idAula: aula.id,
+                          titulo: titulo,
+                          tempoEstimado: tempoEstimado,
+                          totalXP: totalXP,
+                          url: url,
+                        );
                       } else {
                         _ignorarListener = true;
                         atualizaQuantidadeModulo = true;
-
-                        final novoDoc = _firestore.collection('aula').doc();
-
-                        await novoDoc.set({
-                          'id': novoDoc.id,
-                          'idModulo': widget.idModulo,
-                          'titulo': titulo,
-                          'tempoEstimado': tempoEstimado,
-                          'totalXP': totalXP,
-                          'url': url,
-                          'ordem': _aulas.length,
-                        });
+                        await _controller.createLesson(
+                          idModulo: widget.idModulo,
+                          titulo: titulo,
+                          tempoEstimado: tempoEstimado,
+                          totalXP: totalXP,
+                          url: url,
+                          ordem: _aulas.length,
+                        );
                       }
 
                       _erroFormularioTimer?.cancel();

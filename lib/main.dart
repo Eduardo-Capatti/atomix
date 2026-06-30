@@ -1,11 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'cadastro.dart';
-import 'login.dart';
-import 'loginAdmin.dart';
-import 'modulo.dart';
-import 'moduloAdmin.dart';
+import 'views/auth/cadastro_view.dart';
+import 'views/auth/login_admin_view.dart';
+import 'views/auth/login_view.dart';
+import 'views/admin/modulo_admin_view.dart';
+import 'views/student/modulo_view.dart';
 
 final firebaseOptions = FirebaseOptions(
   apiKey: "AIzaSyBRzmKhbB2o4p5zXzKyCmyQ_3zd1303H-4",

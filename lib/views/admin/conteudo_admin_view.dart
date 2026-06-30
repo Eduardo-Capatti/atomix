@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-import 'base64.dart';
-import 'basecard.dart';
+import '../../controllers/admin_controller.dart';
+import '../../utils/image_base64.dart';
+import '../widgets/basecard.dart';
 
 class ConteudoAdmin extends StatefulWidget {
   final String idAula;
@@ -21,7 +21,7 @@ class ConteudoAdmin extends StatefulWidget {
 }
 
 class _ConteudoAdminState extends State<ConteudoAdmin> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AdminController _controller = AdminController();
   Timer? _erroFormularioTimer;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginas = [];
   bool _isLoading = true;
@@ -70,11 +70,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
   }
 
   void _iniciarListenerPaginas() {
-    _paginasListener = _firestore
-        .collection('conteudo')
-        .where('idAula', isEqualTo: widget.idAula)
-        .snapshots()
-        .listen(
+    _paginasListener = _controller.watchPages(widget.idAula).listen(
       (_) async {
         if (_ignorarListener) return;
         await _carregarPaginas();
@@ -132,37 +128,12 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     });
 
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: widget.idAula)
-            .orderBy('pagina')
-            .get();
-      } catch (_) {
-        snapshot = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: widget.idAula)
-            .get();
-      }
-
-      var paginas = snapshot.docs.toList()
-        ..sort(
-          (a, b) => ((a.data()['pagina'] ?? 0) as num)
-              .compareTo((b.data()['pagina'] ?? 0) as num),
-        );
+      var paginas = await _controller.fetchPages(widget.idAula);
 
       final alterou = await _normalizarPaginas(paginas);
 
       if (alterou) {
-        final novoSnapshot = await _firestore
-            .collection('conteudo')
-            .where('idAula', isEqualTo: widget.idAula)
-            .orderBy('pagina')
-            .get();
-
-        paginas = novoSnapshot.docs.toList();
+        paginas = await _controller.fetchOrderedPages(widget.idAula);
       }
 
       if (!mounted) return;
@@ -223,14 +194,17 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
       );
 
       if ((data['pagina'] ?? 0) != i + 1 ||
-          !_listaConteudosIgual(data['conteudos'], conteudos)) {
+          !_controller.contentListsAreEqual(data['conteudos'], conteudos)) {
         alterou = true;
-        await _firestore.collection('conteudo').doc(paginas[i].id).set({
-          'id': paginas[i].id,
-          'idAula': widget.idAula,
-          'pagina': i + 1,
-          'conteudos': conteudos,
-        }, SetOptions(merge: true));
+        await _controller.setPageData(
+          idPagina: paginas[i].id,
+          data: {
+            'id': paginas[i].id,
+            'idAula': widget.idAula,
+            'pagina': i + 1,
+            'conteudos': conteudos,
+          },
+        );
       }
     }
 
@@ -247,41 +221,19 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
     }
   }
 
-  bool _listaConteudosIgual(dynamic original, List<Map<String, dynamic>> normalizado) {
-    if (original is! List) {
-      return normalizado.isEmpty;
-    }
-
-    return jsonEncode(original) == jsonEncode(normalizado);
-  }
-
   List<Map<String, dynamic>> _normalizarConteudos(List<Map<String, dynamic>> conteudos) {
-    for (int i = 0; i < conteudos.length; i++) {
-      conteudos[i]['ordem'] = i;
-
-      if (conteudos[i]['tipo'] == 'exercicio') {
-        conteudos[i]['tipo2'] = conteudos[i]['tipo2']?.toString() ?? 'texto';
-        conteudos[i]['pergunta'] = conteudos[i]['pergunta']?.toString() ?? '';
-        conteudos[i]['resposta'] = (conteudos[i]['resposta'] as num?)?.toInt() ?? 1;
-        conteudos[i]['conteudo'] = List<String>.from(conteudos[i]['conteudo'] as List? ?? []);
-      }
-    }
-
-    return conteudos;
+    return _controller.normalizeContents(conteudos);
   }
 
   Future<void> _adicionarPagina() async {
     try {
       await _executarSemListener(() async {
-        final novoDoc = _firestore.collection('conteudo').doc();
         final proximaPagina = _paginas.length + 1;
 
-        await novoDoc.set({
-          'id': novoDoc.id,
-          'idAula': widget.idAula,
-          'pagina': proximaPagina,
-          'conteudos': <Map<String, dynamic>>[],
-        });
+        await _controller.createPage(
+          idAula: widget.idAula,
+          pagina: proximaPagina,
+        );
 
         await _carregarPaginas(paginaDesejada: proximaPagina);
       });
@@ -303,7 +255,7 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     try {
       await _executarSemListener(() async {
-        await _firestore.collection('conteudo').doc(pagina.id).delete();
+        await _controller.deletePage(pagina.id);
 
         await _carregarPaginas(
           paginaDesejada: _paginas.length <= 1
@@ -336,17 +288,12 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     try {
       await _executarSemListener(() async {
-        final batch = _firestore.batch();
-
-        batch.update(_firestore.collection('conteudo').doc(paginaAtual.id), {
-          'pagina': numeroDestino,
-        });
-
-        batch.update(_firestore.collection('conteudo').doc(paginaDestino.id), {
-          'pagina': numeroAtual,
-        });
-
-        await batch.commit();
+        await _controller.swapPages(
+          idPaginaAtual: paginaAtual.id,
+          numeroAtual: numeroAtual,
+          idPaginaDestino: paginaDestino.id,
+          numeroDestino: numeroDestino,
+        );
         await _carregarPaginas(paginaDesejada: numeroDestino);
       });
     } on FirebaseException {
@@ -378,9 +325,10 @@ class _ConteudoAdminState extends State<ConteudoAdmin> {
 
     try {
       await _executarSemListener(() async {
-        await _firestore.collection('conteudo').doc(pagina.id).update({
-          'conteudos': _normalizarConteudos(conteudos),
-        });
+        await _controller.updatePageContents(
+          idPagina: pagina.id,
+          conteudos: _normalizarConteudos(conteudos),
+        );
 
         if (recarregarPagina) {
           await _carregarPaginas(

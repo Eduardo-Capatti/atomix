@@ -1,55 +1,38 @@
+//Importação necessária para o login
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'session.dart';
 
-class LoginPageAdmin extends StatefulWidget {
-  const LoginPageAdmin({super.key});
+import '../../controllers/auth_controller.dart';
+import '../../controllers/session_controller.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginPageAdmin> createState() => _LoginPageStateAdmin();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageStateAdmin extends State<LoginPageAdmin> {
+class _LoginPageState extends State<LoginPage> {
   TextEditingController txtEmail = TextEditingController();
   TextEditingController txtSenha = TextEditingController();
+  final AuthController _authController = AuthController();
 
   bool esconderSenha = true;
 
   //Autenticação no banco
   Future<void> onLogin(BuildContext context) async {
     try {
-
-      //login deu certo!
-      if (txtEmail.text.trim() != "admin@email.com" || txtSenha.text != "123456") {
-        throw FirebaseAuthException(
-          code: 'invalid-credential'
-        );
-      }
-      UserCredential credencial = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: txtEmail.text
-            .trim(), //limpa espaços vazios que o usuário possa ter digitado sem querer
-        password: txtSenha.text,
-      );
+      await _authController.login(txtEmail.text, txtSenha.text);
 
       //login deu certo!
       if (mounted) {
-        String idUsuario = credencial.user!.uid;
-        String nomeUsuario = credencial.user!.displayName ?? "";
-        formarSession(idUsuario, nomeUsuario, true);
-        Navigator.pushReplacementNamed(context, "/moduloAdmin");
+        //"/home" para ir direto para o MenuPrincipal criado
+        Navigator.pushReplacementNamed(context, "/modulos");
       }
     } on FirebaseAuthException catch (ex) {
       //Tratamento de erros (ex: senha errada, usuário não existe)
-      String errorMessage = "Erro ao fazer login.";
+      String errorMessage = _authController.translateLoginError(ex);
 
-      // Tradução das mensagens de erro
-      if (ex.code == 'user-not-found' || ex.code == 'invalid-credential') {
-        errorMessage = 'E-mail ou senha incorretos.';
-      } else if (ex.code == 'wrong-password') {
-        errorMessage = 'Senha incorreta.';
-      } else if (ex.code == 'invalid-email') {
-        errorMessage = 'Formato de e-mail inválido.';
-      }
       //Mostra o erro na tela para o usuário (SnackBar)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,29 +145,59 @@ class _LoginPageStateAdmin extends State<LoginPageAdmin> {
                   onPressed: () => onLogin(context),
                   child: const Text("Entrar"),
                 ),
+
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "É aluno?",
+                      "Não tem uma conta?",
                       style: TextStyle(color: Colors.blue[900]),
                     ),
+
                     TextButton(
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.only(left: 5.0),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      // Mantemos o pushNamed aqui pois o usuário pode querer apenas ir na tela de cadastro e voltar
-                      onPressed: () => Navigator.pushNamed(context, "/"),
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        "/cadastro",
+                        (route) => false,
+                      ),
                       child: Text(
-                        "Entrar como aluno",
+                        "Cadastrar-se",
                         style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "É professor?",
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
+
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.only(left: 5.0),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => Navigator.pushReplacementNamed(context, "/loginAdmin"),
+                      child: Text(
+                        "Entrar como professor",
+                        style: TextStyle(color: Colors.blue[900], fontWeight: FontWeight(900),),
+                        
+                      ),
+                    ),
+                  ],
+                ),
+
                 
               ],
             ),
